@@ -10,7 +10,7 @@
         (Integer. (nth components 1))
         (str (nth components 2) (nth components 3))
         (Integer. (nth components 4)))
-      "Invalid notation")))
+      (throw (Exception. "Invalid notation")))))
 
 (defn time-signature [beat-count & [sig]]
   (cond
