@@ -12,13 +12,22 @@
         (Integer. (nth components 4)))
       (throw (Exception. "Invalid notation")))))
 
-(defn time-signature [beat-count & [sig]]
+(defn time-signature [note-count & [sig]]
   (cond
-    (> beat-count 3)
-    (let [beats (rand-nth [2 3 4])
-          sig (concat (or sig '()) (range 1 (inc beats)))]
-      (time-signature (- beat-count beats) sig))
-    (and (<= beat-count 3) (> beat-count 0))
-    (let [sig (concat (or sig '()) (range 1 (inc beat-count)))]
+    (> note-count 3)
+    (let [beat (rand-nth [2 3 4])
+          sig (concat (or sig '()) (range 1 (inc beat)))]
+      (time-signature (- note-count beat) sig))
+    (and (<= note-count 3) (> note-count 0))
+    (let [sig (concat (or sig '()) (range 1 (inc note-count)))]
       (time-signature 0 sig))
     :else sig))
+
+(defn segment-beat [note-count note-value]
+  (let [sixteenth-count (* (/ 16 note-value) note-count)
+        notes (range 1 (inc sixteenth-count))]
+    (filter
+      (fn [x] (or (= 1 x) (rand-nth [true false])))
+      notes)))
+
+(defrecord Measure [note time-signature])
