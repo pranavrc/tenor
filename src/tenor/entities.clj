@@ -6,8 +6,7 @@
 
 (defrecord Note [note-value pitch-letter octave]
   Entity
-  (repr [this] (keyword (str pitch-letter octave)))
-)
+  (repr [this] (keyword (str pitch-letter octave))))
 
 (defn make-note [notation]
   (let [notation-re #"^(1|2|4|8|16)([A-G])([#b]?)([1-9])$"
