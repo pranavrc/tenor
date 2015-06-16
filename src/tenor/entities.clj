@@ -29,25 +29,32 @@
       (time-signature 0 sig))
     :else sig))
 
-(defn segment-beat [note-count note-value]
+(defn segment-beat [note-count note-value
+                    & {:keys [sparseness]
+                       :or {sparseness 1}}]
   (let [sixteenth-count (* (/ 16 note-value) note-count)
-        notes (range 1 (inc sixteenth-count))]
+        notes (range 1 (inc sixteenth-count))
+        distribution (cons true (repeat sparseness false))]
     (filter
-      (fn [x] (or (= 1 x) (rand-nth [true false])))
+      (fn [x] (or (= 1 x) (rand-nth distribution)))
       notes)))
 
 (defn segment-measure [measure
-                       & {:keys [running-count result note-value]
-                          :or {running-count 0 result '() note-value 16}}]
+                       & {:keys [running-count result note-value sparseness]
+                          :or {running-count 0 result '()
+                               note-value 16 sparseness 1}}]
   (if (empty? measure)
     result
     (let [result (concat result (map #(+ running-count %)
-                                     (segment-beat (first measure) note-value)))
+                                     (segment-beat (first measure)
+                                                   note-value
+                                                   :sparseness sparseness)))
           running-count (+ running-count (first measure))]
       (segment-measure (rest measure)
                        :running-count running-count
                        :result result
-                       :note-value note-value))))
+                       :note-value note-value
+                       :sparseness sparseness))))
 
 (defrecord Beat [note-count note-value]
   Entity
