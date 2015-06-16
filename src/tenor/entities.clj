@@ -36,6 +36,19 @@
       (fn [x] (or (= 1 x) (rand-nth [true false])))
       notes)))
 
+(defn segment-measure [measure
+                       & {:keys [running-count result note-value]
+                          :or {running-count 0 result '() note-value 16}}]
+  (if (empty? measure)
+    result
+    (let [result (concat result (map #(+ running-count %)
+                                     (segment-beat (first measure) note-value)))
+          running-count (+ running-count (first measure))]
+      (segment-measure (rest measure)
+                       :running-count running-count
+                       :result result
+                       :note-value note-value))))
+
 (defrecord Beat [note-count note-value]
   Entity
   (generated [this] (segment-beat note-count note-value)))
