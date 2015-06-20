@@ -1,4 +1,5 @@
-(ns tenor.entities)
+(ns tenor.entities
+  (:use [overtone.live]))
 
 (defprotocol Entity
   (repr [this])
@@ -60,6 +61,25 @@
   Entity
   (generated [this] (segment-beat note-count note-value)))
 
+(defn generate-random-scale []
+  (let [scale-type (rand-nth (keys SCALE))
+        ninth-octave-count 131
+        note-name (find-note-name (rand-int ninth-octave-count))]
+    (scale note-name scale-type)))
+
+(defn map-measure [measure scale]
+  (map #(hash-map :pos %, :note (rand-nth scale)) measure))
+
 (defrecord Measure [note-count note-value]
   Entity
-  (generated [this] (time-signature note-count)))
+  (generated [this] (map-measure
+                      (segment-measure (time-signature note-count))
+                      (generate-random-scale))))
+
+(defmacro construct-note [time player entity]
+  `(list 'at ~time (list ~player ~entity)))
+
+(defmacro construct-measure [measure-maps base-time player]
+  `(map #(construct-note (* (:pos %) ~base-time)
+                         ~player (:note %))
+        ~measure-maps))
