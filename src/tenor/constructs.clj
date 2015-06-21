@@ -60,6 +60,10 @@
 
 (defmacro construct-measure [measure-maps base-time player]
   `(map #(construct-note (+ (now) (* (:pos %) ~base-time))
-                         '~player (:note %))
+                         ~player (:note %))
         ~measure-maps))
+
+(defn play-measure [measure-maps base-time player]
+  `(let [time# (now)]
+     ~@(construct-measure measure-maps base-time player)))
 
