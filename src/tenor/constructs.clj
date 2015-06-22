@@ -55,6 +55,11 @@
 (defn map-measure [measure scale]
   (map #(hash-map :pos %, :note (rand-nth scale)) measure))
 
+(defn generate-measure-map [note-count note-value]
+  (map-measure
+    (segment-measure (time-signature note-count))
+    (generate-random-scale)))
+
 (defmacro construct-note [time player entity]
   `(list 'at ~time (list ~player ~entity)))
 
