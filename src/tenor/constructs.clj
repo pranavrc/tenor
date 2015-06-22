@@ -75,18 +75,49 @@
                        :note-value note-value
                        :sparseness sparseness))))
 
+(defn string-measures [measures note-count
+                       & {:keys [running-string running-count]
+                          :or {running-string '() running-count 0}}]
+  "String multiple measures together into a single piece."
+  (if (empty? measures)
+    running-string
+    (let [running-string (concat
+                           running-string
+                           (map #(+ running-count %) (first measures)))
+          running-count (+ running-count note-count)]
+      (string-measures (rest measures)
+                       note-count
+                       :running-string running-string
+                       :running-count running-count))))
 
-(defn map-measure [measure scale]
+;; --- Musical piece --- ;;;
+
+(defn map-entity [entity scale]
   "Create a list of hash-maps of positions as keys
   and musical notes as values."
-  (map #(hash-map :pos %, :note (rand-nth scale)) measure))
+  (map #(hash-map :pos %, :note (rand-nth scale)) entity))
 
-(defn generate-measure-map [note-count note-value]
-  "Take note count and note value, and generate a
-  measure map using map-measure."
-  (map-measure
-    (segment-measure (time-signature note-count))
-    (generate-random-scale)))
+(defn generate-entity-map [measure-count note-count
+                            & {:keys [note-value sparseness scale]
+                               :or {note-value 16
+                                    sparseness 1
+                                    scale (generate-random-scale)}}]
+  "Take measure count,note count and note value, and generate a
+  measure map using map-entity."
+  (map-entity
+    (generate-piece measure-count note-count note-value sparseness)
+    scale))
+
+(defn generate-piece [measure-count note-count note-value sparseness]
+  "Generate a musical piece with measure-count measures,
+  each of time signature with note-count and note-value."
+  (let [piece (repeatedly
+                measure-count
+                #(segment-measure
+                   (time-signature note-count)
+                   note-value
+                   sparseness))]
+    (string-measures piece note-count)))
 
 ;; --- Playback --- ;;
 
