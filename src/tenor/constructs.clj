@@ -95,15 +95,16 @@
   and return overtone code that plays the note."
   `(list 'at ~time (list ~player ~entity)))
 
-(defmacro construct-measure [measure-maps base-time player]
+(defmacro construct-measure [measure-maps base-time player pivot-time]
   "Take a measure map and run construct-note on each
   note, creating a list of overtone playback code components."
-  `(map #(construct-note (+ (now) (* (:pos %) ~base-time))
+  `(map #(construct-note (+ ~pivot-time (* (:pos %) ~base-time))
                          ~player (:note %))
         ~measure-maps))
 
-(defn play-measure [measure-maps base-time player]
+(defn play-measure [measure-maps base-time player
+                    & {:keys [pivot-time] :or {pivot-time (now)}}]
   "Play the constructed measure with current time as start time."
-  `(let [time# (now)]
-     ~@(construct-measure measure-maps base-time player)))
+  `(let [time# ~pivot-time]
+     ~@(construct-measure measure-maps base-time player pivot-time)))
 
