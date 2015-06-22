@@ -1,14 +1,26 @@
+;; tenor/constructs.clj
+;; Primitive components of music theory.
+
 (ns tenor.constructs
   (:use [overtone.live]))
 
+
+;; --- Notes --- ;;
+
 (defn make-note [notation]
+  "Take pitch letter + octave notation
+  and generate an overtone note keyword."
   (let [notation-re #"^([A-G])([#b]?)([1-9])$"
         components (re-matches notation-re notation)]
     (if components
       (keyword (reduce str (rest components)))
       (throw (Exception. "Invalid notation")))))
 
+;; --- Time Signature --- ;;
+
 (defn time-signature [note-count & [sig]]
+  "Decompose a measure into randomly spaced out beats,
+  within the time signature's note count."
   (cond
     (> note-count 3)
     (let [beat (rand-nth [2 3 4])
@@ -19,9 +31,13 @@
       (time-signature 0 sig))
     :else sig))
 
+;; --- Beats --- ;;;
+
 (defn segment-beat [note-count note-value
                     & {:keys [sparseness]
                        :or {sparseness 1}}]
+  "Break a beat down into sixteenth-note positions and
+  assign notes and rests to each position by iteration."
   (let [sixteenth-count (* (/ 16 note-value) note-count)
         notes (range 1 (inc sixteenth-count))
         distribution (cons true (repeat sparseness false))]
@@ -29,10 +45,23 @@
       (fn [x] (or (= 1 x) (rand-nth distribution)))
       notes)))
 
+;; --- Scales --- ;;;
+
+(defn generate-random-scale []
+  "Generate a random scale (Example - :E3 :Dorian)."
+  (let [scale-type (rand-nth (keys SCALE))
+        ninth-octave-count 131
+        note-name (find-note-name (rand-int ninth-octave-count))]
+    (scale note-name scale-type)))
+
+;; --- Measures --- ;;;
+
 (defn segment-measure [measure
                        & {:keys [running-count result note-value sparseness]
                           :or {running-count 0 result '()
                                note-value 16 sparseness 1}}]
+  "Segment a measure into beats and further segment the beats,
+  essentially breaking the measure down into sixteenth-notes."
   (if (empty? measure)
     result
     (let [result (concat result (map #(+ running-count %)
@@ -46,29 +75,35 @@
                        :note-value note-value
                        :sparseness sparseness))))
 
-(defn generate-random-scale []
-  (let [scale-type (rand-nth (keys SCALE))
-        ninth-octave-count 131
-        note-name (find-note-name (rand-int ninth-octave-count))]
-    (scale note-name scale-type)))
 
 (defn map-measure [measure scale]
+  "Create a list of hash-maps of positions as keys
+  and musical notes as values."
   (map #(hash-map :pos %, :note (rand-nth scale)) measure))
 
 (defn generate-measure-map [note-count note-value]
+  "Take note count and note value, and generate a
+  measure map using map-measure."
   (map-measure
     (segment-measure (time-signature note-count))
     (generate-random-scale)))
 
+;; --- Playback --- ;;
+
 (defmacro construct-note [time player entity]
+  "Take time, instrument and note entity as arguments,
+  and return overtone code that plays the note."
   `(list 'at ~time (list ~player ~entity)))
 
 (defmacro construct-measure [measure-maps base-time player]
+  "Take a measure map and run construct-note on each
+  note, creating a list of overtone playback code components."
   `(map #(construct-note (+ (now) (* (:pos %) ~base-time))
                          ~player (:note %))
         ~measure-maps))
 
 (defn play-measure [measure-maps base-time player]
+  "Play the constructed measure with current time as start time."
   `(let [time# (now)]
      ~@(construct-measure measure-maps base-time player)))
 
