@@ -97,17 +97,6 @@
   and musical notes as values."
   (map #(hash-map :pos %, :note (rand-nth scale)) entity))
 
-(defn generate-entity-map [measure-count note-count
-                            & {:keys [note-value sparseness scale]
-                               :or {note-value 16
-                                    sparseness 1
-                                    scale (generate-random-scale)}}]
-  "Take measure count,note count and note value, and generate a
-  measure map using map-entity."
-  (map-entity
-    (generate-piece measure-count note-count note-value sparseness)
-    scale))
-
 (defn generate-piece [measure-count note-count note-value sparseness]
   "Generate a musical piece with measure-count measures,
   each of time signature with note-count and note-value."
@@ -118,6 +107,17 @@
                    note-value
                    sparseness))]
     (string-measures piece note-count)))
+
+(defn generate-entity-map [measure-count note-count
+                            & {:keys [note-value sparseness scale]
+                               :or {note-value 16
+                                    sparseness 1
+                                    scale (generate-random-scale)}}]
+  "Take measure count,note count and note value, and generate a
+  measure map using map-entity."
+  (map-entity
+    (generate-piece measure-count note-count note-value sparseness)
+    scale))
 
 ;; --- Playback --- ;;
 
