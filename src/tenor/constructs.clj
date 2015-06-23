@@ -101,12 +101,8 @@
   "Generate a musical piece with measure-count measures,
   each of time signature with note-count and note-value."
   (let [time-sig (time-signature note-count)
-        piece (repeatedly
-                measure-count
-                #(segment-measure
-                   time-sig
-                   note-value
-                   sparseness))]
+        segmented (segment-measure time-sig note-value sparseness)
+        piece (repeat measure-count segmented)]
     (string-measures piece note-count)))
 
 (defn generate-entity-map [measure-count note-count
