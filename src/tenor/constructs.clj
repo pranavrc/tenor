@@ -100,10 +100,11 @@
 (defn generate-piece [measure-count note-count note-value sparseness]
   "Generate a musical piece with measure-count measures,
   each of time signature with note-count and note-value."
-  (let [piece (repeatedly
+  (let [time-sig (time-signature note-count)
+        piece (repeatedly
                 measure-count
                 #(segment-measure
-                   (time-signature note-count)
+                   time-sig
                    note-value
                    sparseness))]
     (string-measures piece note-count)))
