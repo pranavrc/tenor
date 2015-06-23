@@ -101,7 +101,7 @@
 
 (defn make-move [scale degree]
   (let [movements '(up-step down-step up-leap down-leap up-octave down-octave)
-        current-move (weighted-choose movements '(0.35 0.35 0.1 0.1 0.05 0.05))
+        current-move (weighted-choose movements '(0.38 0.38 0.08 0.08 0.04 0.04))
         temp-degree ((resolve current-move) degree)]
     (if (and (> temp-degree 0) (>= (count scale) temp-degree))
       temp-degree
