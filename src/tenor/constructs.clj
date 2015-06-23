@@ -100,6 +100,8 @@
 (defn down-octave [degree] (- 7 degree))
 
 (defn make-move [scale degree]
+  "Generate an interval jump from the current note
+  until another compatible note is reached."
   (let [movements '(up-step down-step up-leap down-leap up-octave down-octave)
         current-move (weighted-choose movements '(0.38 0.38 0.08 0.08 0.04 0.04))
         temp-degree ((resolve current-move) degree)]
@@ -111,6 +113,8 @@
                            & {:keys [running-interval degree]
                               :or {running-interval '()
                                    degree 1}}]
+  "Build an interval-representation of the melody
+  by traversing through the scale in steps/leaps/octave jumps."
   (if (<= note-count 0)
     running-interval
     (let [degree (make-move scale degree)
@@ -122,6 +126,8 @@
                            :running-interval running-interval))))
 
 (defn generate-intervals [scale note-count]
+  "Start from the first note, construct intervals,
+  end at the first or last note."
   (let [mid-intervals (construct-intervals scale (- note-count 2))
         scale-count (count scale)]
     (concat '(1)
@@ -129,6 +135,7 @@
             (list (rand-nth `(1 ~scale-count))))))
 
 (defn intervals->notes [intervals scale]
+  "Convert intervals to notes in a scale."
   (map #(nth scale (dec %)) intervals))
 
 ;; --- Musical piece --- ;;
@@ -161,6 +168,7 @@
 ;; --- Chords --- ;;
 
 (defn chordify [entity-map]
+  "Pick random notes from an entity map to assign chords."
   (filter (fn [x] (weighted-coin 0.2)) entity-map))
 
 ;; --- Playback --- ;;
