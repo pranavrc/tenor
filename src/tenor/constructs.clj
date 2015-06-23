@@ -158,6 +158,11 @@
                           (generate-intervals scale (count piece)) scale)]
   (map-entity piece scale-intervals)))
 
+;; --- Chords --- ;;
+
+(defn chordify [entity-map]
+  (filter (fn [x] (weighted-coin 0.2)) entity-map))
+
 ;; --- Playback --- ;;
 
 (defmacro construct-note [time player entity]
