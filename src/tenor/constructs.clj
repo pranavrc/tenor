@@ -90,12 +90,53 @@
                        :running-string running-string
                        :running-count running-count))))
 
-;; --- Musical piece --- ;;;
+;; --- Intervals --- ;;
 
-(defn map-entity [entity scale]
+(defn up-step [degree] (inc degree))
+(defn down-step [degree] (dec degree))
+(defn up-leap [degree] (+ (rand-nth [2 3 4 5]) degree))
+(defn down-leap [degree] (- (rand-nth [2 3 4 5]) degree))
+(defn up-octave [degree] (+ 7 degree))
+(defn down-octave [degree] (- 7 degree))
+
+(defn make-move [scale degree]
+  (let [movements '(up-step down-step up-leap down-leap up-octave down-octave)
+        current-move (weighted-choose movements '(0.35 0.35 0.1 0.1 0.05 0.05))
+        temp-degree ((resolve current-move) degree)]
+    (if (and (> temp-degree 0) (>= (count scale) temp-degree))
+      temp-degree
+      (make-move scale temp-degree))))
+
+(defn construct-intervals [scale note-count
+                           & {:keys [running-interval degree]
+                              :or {running-interval '()
+                                   degree 1}}]
+  (if (<= note-count 0)
+    running-interval
+    (let [degree (make-move scale degree)
+          running-interval (concat running-interval (list degree))
+          note-count (dec note-count)]
+      (construct-intervals scale
+                           note-count
+                           :degree degree
+                           :running-interval running-interval))))
+
+(defn generate-intervals [scale note-count]
+  (let [mid-intervals (construct-intervals scale (- note-count 2))
+        scale-count (count scale)]
+    (concat '(1)
+            mid-intervals
+            (list (rand-nth `(1 ~scale-count))))))
+
+(defn intervals->notes [intervals scale]
+  (map #(nth scale (dec %)) intervals))
+
+;; --- Musical piece --- ;;
+
+(defn map-entity [entity intervals]
   "Create a list of hash-maps of positions as keys
   and musical notes as values."
-  (map #(hash-map :pos %, :note (rand-nth scale)) entity))
+  (map #(hash-map :pos %1, :note %2) entity intervals))
 
 (defn generate-piece [measure-count note-count note-value sparseness]
   "Generate a musical piece with measure-count measures,
@@ -112,9 +153,10 @@
                                     scale (generate-random-scale)}}]
   "Take measure count,note count and note value, and generate a
   measure map using map-entity."
-  (map-entity
-    (generate-piece measure-count note-count note-value sparseness)
-    scale))
+  (let [piece (generate-piece measure-count note-count note-value sparseness)
+        scale-intervals (intervals->notes
+                          (generate-intervals scale (count piece)) scale)]
+  (map-entity piece scale-intervals)))
 
 ;; --- Playback --- ;;
 
