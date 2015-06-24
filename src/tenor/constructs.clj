@@ -195,5 +195,6 @@
 ;; --- Multiple voices --- ;;
 
 (defn generate-parallel-voices [& body]
+  "Run multiple pieces concurrently using pmap."
   (pmap #(eval %) `(list ~@body)))
 
