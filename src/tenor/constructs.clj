@@ -92,6 +92,7 @@
 
 ;; --- Intervals --- ;;
 
+(defn pass [degree] (+ 0 degree))
 (defn up-step [degree] (inc degree))
 (defn down-step [degree] (dec degree))
 (defn up-leap [degree] (+ (rand-nth [2 3 4 5 6 7]) degree))
@@ -102,8 +103,8 @@
 (defn make-move [scale degree]
   "Generate an interval jump from the current note
   until another compatible note is reached."
-  (let [movements '(up-step down-step up-leap down-leap up-octave down-octave)
-        current-move (weighted-choose movements '(0.38 0.38 0.08 0.08 0.04 0.04))
+  (let [movements '(pass up-step down-step up-leap down-leap up-octave down-octave)
+        current-move (weighted-choose movements '(0.06 0.35 0.35 0.08 0.08 0.04 0.04))
         temp-degree ((resolve current-move) degree)]
     (if (and (> temp-degree 0) (>= (count scale) temp-degree))
       temp-degree
