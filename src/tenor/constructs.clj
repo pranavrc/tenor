@@ -94,10 +94,10 @@
 
 (defn up-step [degree] (inc degree))
 (defn down-step [degree] (dec degree))
-(defn up-leap [degree] (+ (rand-nth [2 3 4 5]) degree))
-(defn down-leap [degree] (- (rand-nth [2 3 4 5]) degree))
-(defn up-octave [degree] (+ 7 degree))
-(defn down-octave [degree] (- 7 degree))
+(defn up-leap [degree] (+ (rand-nth [2 3 4 5 6 7]) degree))
+(defn down-leap [degree] (- (rand-nth [2 3 4 5 6 7]) degree))
+(defn up-octave [degree] (+ 8 degree))
+(defn down-octave [degree] (- 8 degree))
 
 (defn make-move [scale degree]
   "Generate an interval jump from the current note
