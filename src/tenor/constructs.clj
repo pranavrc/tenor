@@ -92,25 +92,7 @@
 
 ;; --- Intervals --- ;;
 
-(defn pass [degree] (+ 0 degree))
-(defn up-step [degree] (inc degree))
-(defn down-step [degree] (dec degree))
-(defn up-leap [degree] (+ (rand-nth [2 3 4 5 6 7]) degree))
-(defn down-leap [degree] (- (rand-nth [2 3 4 5 6 7]) degree))
-(defn up-octave [degree] (+ 8 degree))
-(defn down-octave [degree] (- 8 degree))
-
-(defn make-move [scale degree]
-  "Generate an interval jump from the current note
-  until another compatible note is reached."
-  (let [movements '(pass up-step down-step up-leap down-leap up-octave down-octave)
-        current-move (weighted-choose movements '(0.06 0.35 0.35 0.08 0.08 0.04 0.04))
-        temp-degree ((resolve current-move) degree)]
-    (if (and (> temp-degree 0) (>= (count scale) temp-degree))
-      temp-degree
-      (make-move scale temp-degree))))
-
-(defn construct-intervals [scale note-count
+(defn construct-intervals [construct-melody scale note-count
                            & {:keys [running-interval degree]
                               :or {running-interval '()
                                    degree 1}}]
@@ -118,18 +100,19 @@
   by traversing through the scale in steps/leaps/octave jumps."
   (if (<= note-count 0)
     running-interval
-    (let [degree (make-move scale degree)
+    (let [degree (construct-melody scale degree)
           running-interval (concat running-interval (list degree))
           note-count (dec note-count)]
-      (construct-intervals scale
+      (construct-intervals construct-melody
+                           scale
                            note-count
                            :degree degree
                            :running-interval running-interval))))
 
-(defn generate-intervals [scale note-count]
+(defn generate-intervals [construct-melody scale note-count]
   "Start from the first note, construct intervals,
   end at the first or last note."
-  (let [mid-intervals (construct-intervals scale (- note-count 2))
+  (let [mid-intervals (construct-intervals construct-melody scale (- note-count 2))
         scale-count (count scale)]
     (concat '(1)
             mid-intervals
@@ -154,16 +137,16 @@
         piece (repeat measure-count segmented)]
     (string-measures piece note-count)))
 
-(defn generate-entity-map [measure-count note-count
+(defn generate-entity-map [construct-melody measure-count note-count
                             & {:keys [note-value sparseness scale]
                                :or {note-value 16
                                     sparseness 1
                                     scale (generate-random-scale)}}]
-  "Take measure count,note count and note value, and generate a
-  measure map using map-entity."
+  "Take a function to construct a melody, measure count, note count and note value,
+  and generate a measure map of the melody and rhythm using map-entity."
   (let [piece (generate-piece measure-count note-count note-value sparseness)
         scale-intervals (intervals->notes
-                          (generate-intervals scale (count piece)) scale)]
+                          (generate-intervals construct-melody scale (count piece)) scale)]
   (map-entity piece scale-intervals)))
 
 ;; --- Chords --- ;;
