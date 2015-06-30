@@ -232,5 +232,28 @@ user=> (segment-measure meter-11 :note-value 4 :sparseness 100)
 
 Voila, we have the *ones* from the meter! The other sixteenth-beats were never filled, they all ended up as rests.
 
+##### TL;DR
+
+- We construct a random *meter* for a single measure of a specific time signature using the `generate-meter` function. Say, `(1 4 3 3)` for a 11/4 measure (11 quarter-beats, counted `one - one-two-three-four - one-two-three - one-two-three`).
+```
+user=> (def meter-11 (generate-meter 11))
+#'user/meter-11
+user=> meter-11
+(1 4 3 3)
+```
+
+- We segment the measure further into sixteenth-beats, using the `segment-measure` function. A 11/4 measure will have `11 * 16/4 = 44` sixteenth beats, and since the meter specifies positions that *must* contain notes, our measure will contain notes at `1`, `1 + (16/4)*1 = 5`, `5 + (16/4)*4 = 21` and `21 + (16/4) * 3 = 33` sixteenth-beat positions. The rest of the beats are populated randomly with notes or rests.
+```
+user=> (segment-measure meter-11 :note-value 4)
+(1 3 4 5 7 8 9 10 11 13 14 16 19 20 21 23 28 30 32 33 37 39 42 44)
+```
+
+- The ratio of notes to rests in the measure can be determined by using the *sparseness* parameter (whose default value is 1).
+```
+user=> (segment-measure meter-11 :note-value 4 :sparseness 2)
+(1 2 4 5 8 10 13 15 21 23 27 29 30 33 35 41 42 44)
+user=> (segment-measure meter-11 :note-value 4 :sparseness 100)
+(1 5 21 33)
+```
 
 *...work in progress...*
