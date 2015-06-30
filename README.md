@@ -6,6 +6,17 @@ But popular and contemporary music has tuned the ears of the average listener to
 
 The project is an attempt at constructing primitive music theory and using it as a base to build procedures that can generate melodies, in-tune to the ears of the average listener.
 
+## Contents
+
+- [Music to the human ears](#music-to-the-human-ears)
+- [Rhythm](#rhythm)
+  - [Time Signature](#time-signature)
+  - [Popular songs in non-4/4 signature](#popular-songs-in-non-44-signature)
+  - [Representing measures](#representing-measures)
+  - [Meters](#meters)
+  - [Generating a measure in 11/4](#generating-a-measure-in-114)
+  - [Sparseness of a measure](#sparseness-of-a-measure)
+
 ### Music to the human ears
 
 Most pieces in contemporary music share certain common characteristics in rhythm, harmony and melody. There's a high chance that one or more of these characteristics occur in a song that we happen to discover, and since we're attuned to these patterns already, the melody then becomes instantly identifiable without sounding like random noise.
