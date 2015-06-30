@@ -158,7 +158,7 @@ A [meter](https://en.wikipedia.org/wiki/Meter_%28music%29) tells us how to *coun
  one-two - one-two - one-two-three - one-two - one-two
  one-two-three-four - one-two-three - one-two - one-two
  one-two-three-four - one-two-three-four - one-two-three
- ```
+```
  
 The grouping could simply mean that the *one* beats are more emphasized (preferably using notes), than the others (could contain notes or rests).
 
