@@ -91,20 +91,20 @@ Sixteenth beats give us enough granularity to represent positions in the measure
 Any of these numbers from 1 to 16 could be notes or rests. For the sake of representation, let's ignore the rests (there can only be notes and rests, so if a number is missing, we know it's a rest). Let's go back to the *Comfortably Numb* example, whose first beat we decomposed as `1-1-0-1`. In our new notation of a measure, this would be `1-2-4` (3 is a rest, so it's ignored). Decomposing the other beats in our old notation, we get:
 
 ```
-1   -  1    -  0  -  1
-Hel -  lo   -  _  -  Hel
+1   -  1    -  0  -  1       |    1   -   2   -   4
+Hel -  lo   -  _  -  Hel     |    Hel -   lo  -   Hel
 
-1   -  0    -  1  -  1
-lo  -  _    - Hel -  lo
+1   -  0    -  1  -  1       |    5   -   7   -   8
+lo  -  _    - Hel -  lo      |    lo  -   Hel -   lo
 
-0   -  0    -  1  -  1
-_   -  _    -  Is -  there
+0   -  0    -  1  -  1       |    11  -  12
+_   -  _    -  Is -  there   |    Is  -  there
 
-1   -  1    -  1  -  1
-any -  body -  in -  there
+1   -  1    -  1  -  1       |    13  - 14   - 15 - 16
+any -  body -  in -  there?  |    any - body - in - there?
 ```
 
-Ignoring the rests, this becomes `(1-2-4) - (5-7-8) - (11-12) - (13-14-15-16)` in our new notation.
+Ignoring the rests, this becomes `(1-2-4) - (5-7-8) - (11-12) - (13-14-15-16)` in our new notation. Let's put these together into a list:
 
 ```
 [1 2 4 5 7 8 11 12 13 14 15 16]
@@ -184,7 +184,7 @@ user=> (segment-measure meter-11 :note-value 4)
 
 Note that for our `1-4-3-3` (`4-16-12-12` in sixteenth-beats) meter (the *ones* would correspond with 1, 5, 21 and 33 sixteenth-beat positions respectively), every generated measure contains a note at the 1, 5, 21 and 33 note positions. A rest can never fall on these positions.
 
-We introduce a new factor called *sparseness* which determines how dense a measure is (Remember? The first measure of *Smoke on the Water* had way more notes than *Comfortably Numb*). The higher the *sparseness* of a measure, the more rests it contains. The default sparseness is 1, which means a sixteenth-beat has equal chances of being either a note or a rest.
+We introduce a new factor called *sparseness* which determines how dense a measure is (Remember? The first measure of *Smoke on the Water* had more notes than *Comfortably Numb*; it was less sparse). The higher the *sparseness* of a measure, the more rests it contains. The default sparseness is 1, which means a sixteenth-beat has equal chances of being either a note or a rest.
 
 ```
 user=> (segment-measure meter-11 :note-value 4 :sparseness 2)
