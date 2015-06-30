@@ -147,7 +147,7 @@ We could count the *Mission Impossible* theme using the following meter:
 one-two-three - one-two-three - one-two - one-two
 ```
 
-#### Generating a measure in 11/4
+##### Generating a measure in 11/4
 
 So far, we've looked at decomposing a measure into a meter and further into a list of sixteenth-beats. The meter helps in singling out positions within the measure which *must* contain notes for emphasis, and each sixteenth-beat could either be a note or a rest.
 
