@@ -18,27 +18,27 @@
 
 ;; --- Time Signature --- ;;
 
-(defn time-signature [note-count & [sig]]
-  "Decompose a measure into randomly spaced out beats,
+(defn generate-meter [beat-count & [sig]]
+  "Decompose a measure into a random meter of beats,
   within the time signature's note count."
   (cond
-    (> note-count 3)
+    (> beat-count 3)
     (let [beat (rand-nth [2 3 4])
           sig (conj (or sig '()) beat)]
-      (time-signature (- note-count beat) sig))
-    (and (<= note-count 3) (> note-count 0))
-    (let [sig (conj (or sig '()) note-count)]
-      (time-signature 0 sig))
+      (generate-meter (- beat-count beat) sig))
+    (and (<= beat-count 3) (> beat-count 0))
+    (let [sig (conj (or sig '()) beat-count)]
+      (generate-meter 0 sig))
     :else sig))
 
 ;; --- Beats --- ;;;
 
-(defn segment-beat [note-count note-value
+(defn segment-beat [beat-count note-value
                     & {:keys [sparseness]
                        :or {sparseness 1}}]
   "Break a beat down into sixteenth-note positions and
   assign notes and rests to each position by iteration."
-  (let [sixteenth-count (* (/ 16 note-value) note-count)
+  (let [sixteenth-count (* (/ 16 note-value) beat-count)
         notes (range 1 (inc sixteenth-count))
         distribution (cons true (repeat sparseness false))]
     (filter
@@ -75,7 +75,7 @@
                        :note-value note-value
                        :sparseness sparseness))))
 
-(defn string-measures [measures note-count
+(defn string-measures [measures beat-count
                        & {:keys [running-string running-count]
                           :or {running-string '() running-count 0}}]
   "String multiple measures together into a single piece."
@@ -84,9 +84,9 @@
     (let [running-string (concat
                            running-string
                            (map #(+ running-count %) (first measures)))
-          running-count (+ running-count note-count)]
+          running-count (+ running-count beat-count)]
       (string-measures (rest measures)
-                       note-count
+                       beat-count
                        :running-string running-string
                        :running-count running-count))))
 
@@ -129,22 +129,22 @@
   and musical notes as values."
   (map #(hash-map :pos %1, :note %2) entity intervals))
 
-(defn generate-piece [measure-count note-count note-value sparseness]
+(defn generate-piece [measure-count beat-count note-value sparseness]
   "Generate a musical piece with measure-count measures,
-  each of time signature with note-count and note-value."
-  (let [time-sig (time-signature note-count)
+  each of time signature with beat-count and note-value."
+  (let [time-sig (generate-meter beat-count)
         segmented (segment-measure time-sig note-value sparseness)
         piece (repeat measure-count segmented)]
-    (string-measures piece note-count)))
+    (string-measures piece beat-count)))
 
-(defn generate-entity-map [construct-melody measure-count note-count
+(defn generate-entity-map [construct-melody measure-count beat-count
                             & {:keys [note-value sparseness scale]
                                :or {note-value 16
                                     sparseness 1
                                     scale (generate-random-scale)}}]
   "Take a function to construct a melody, measure count, note count and note value,
   and generate a measure map of the melody and rhythm using map-entity."
-  (let [piece (generate-piece measure-count note-count note-value sparseness)
+  (let [piece (generate-piece measure-count beat-count note-value sparseness)
         scale-intervals (intervals->notes
                           (generate-intervals construct-melody scale (count piece)) scale)]
   (map-entity piece scale-intervals)))
