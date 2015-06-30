@@ -19,6 +19,11 @@ The project is an attempt at constructing primitive music theory and using it as
   - [Generating a measure in 11/4](#generating-a-measure-in-114)
   - [Sparseness of a measure](#sparseness-of-a-measure)
   - [TL;DR](#tldr)
+- [Melody](#melody)
+  - [Notes](#notes)
+  - [Octaves](#octaves)
+  - [Semitones and Whole tones](#semitones-and-whole-tones)
+  - [Scales](#scales)
 
 ***
 
@@ -267,6 +272,58 @@ user=> (segment-measure meter-11 :note-value 4 :sparseness 100)
 
 ### Melody
 
-Melody is, possibly, the identity of a song. It could be considered the prime contributing factor to the *mood* or *feel* of a song. Though a melody cannot exist without a rhythm, both rhythm and harmony can be considered as support structures that enrich the melody. There are probably a huge number of patterns and methods in which listenable melodies can be generated procedurally.
+Melody is, possibly, the identity of a song. It can be considered the prime contributing factor to the *mood* or *feel* of a song. Though a melody cannot exist without a rhythm, both rhythm and harmony can be considered as support structures that enrich the melody. There are probably a huge number of patterns and methods in which listenable melodies can be generated procedurally.
+
+##### Notes
+
+[Notes](https://en.wikipedia.org/wiki/Musical_note) are sounds of a certain pitch or frequency. The A4 note is, for instance, a sound of 440 Hz. The A5 note is a sound of 880 Hz. The musical note starts from C0 at 16.35 Hz. Unlike the English alphabet, musical notes in western musical notation start from C and end with G, as follows:
+
+```
+C  C#/Db  D  D#/Eb  E  F  F#/Gb  G  G#/Ab  A  A#/Bb  B
+```
+
+`#` indicates a *Sharp* and `b` indicates a *Flat*. Note that there is no `B#/Cb` or `E#/Fb`. This is merely a convention that arose from the constraint that there could only be 12 notes in an *octave*. In some forms of musical notation, E# and B# do exist.
+
+The frequency ratio between a note and its previous note is the [twelfth root of two](https://en.wikipedia.org/wiki/Twelfth_root_of_two), or `1.0594`. For instance, `C#0 (17.32 Hz) / C0 (16.35 Hz) = 1.0594`.
+
+##### Octaves
+
+An [octave](https://en.wikipedia.org/wiki/Octave) is the distance between a note of frequency X and the note of frequency 2X, containing twelve notes. The range of frequencies between A4 and A5 constitute one octave.
+
+For instance, here's the octave from A4 to A5 and the corresponding frequencies:
+
+```
+A4   A#4/Bb4  B4      C5      C#5/Db5   D5      D#5/Eb5   E5      F5      F#5/Gb5   G5      G#5/Ab5
+440  466.16   498.88  523.25  554.37    587.33  622.25    659.25  698.45  739.99    783.99  830.61
+```
+
+##### Semitones and Whole tones
+
+- The interval between one note and the next (A4 and A#4) is a [semitone](https://en.wikipedia.org/wiki/Semitone) or a half-step. They're indicated by `H`.
+- The interval between a note and the note two semitones after it (A4 and B4) is a [whole tone](https://en.wikipedia.org/wiki/Major_second) or a whole-step. They're indicated by `W`.
+
+##### Scales
+
+[Scales](https://en.wikipedia.org/wiki/Scale_%28music%29) are groups of notes, ascending in frequency. Depending on how a scale is built, it could exhibit a certain mood, characteristic or emotion. The most used types of scales are the major scales and the minor scales, but there are a lot of other types.
+
+[Major scales](https://en.wikipedia.org/wiki/Major_scale) are constructed using the `W-W-H-W-W-W-H` pattern (W-Whole step, H-Half step). For example, the A4 major scale is as follows:
+
+```
+A4 - B4 - C#5 - D5 - E5 - F#5 - G#5 - A5
+   W    W     H    W    W     W     H
+```
+
+They tend to express *positive* emotions like majesty, victory, curiosity, love, joy and so on, in general.
+
+[Minor scales](http://en.wikipedia.org/wiki/Minor_scale) or *natural minor* scales are constructed using the `W-H-W-W-H-W-W` pattern. For example, the A4 minor is as follows:
+
+```
+A4 - B4 - C5 - D5 - E5 - F5 - G5 - A5
+   W    H    W    W    W    W    W
+```
+
+They tend to express *negative* emotions like betrayal, melancholy, tragedy, ominousness and so on, in general.
+
+Here's a document for further reading on [Characteristics of Musical Keys](http://biteyourownelbow.com/keychar.htm).
 
 *...work in progress...*
