@@ -36,7 +36,7 @@ In there? - (Rest) - (Rest) Just - nod
 Tap       - Tap    - Tap         - Tap
 ```
 
-Let's take the first beat ('Hello Hel'), and decompose the quarter note (1/4) into sixteenth notes (1/16), which means we're gonna split the beat further into four other beats. Now, if we tap to *these* beats (we'd have to tap really fast), the beat will look like this.
+Let's take the first beat ('Hello Hel'), and decompose the quarter note (1/4) into sixteenth notes (1/16), which means we're gonna split the beat further into four other beats. Now, if we tap to *these* beats (we'd have to tap really fast), the quarter beat will look like this.
 
 ```
 Hel - lo  - (rest)  - Hel
@@ -57,7 +57,7 @@ Smo - oo  - oo  - oo
 Tap - Tap - Tap - Tap
 ```
 
-If 'Hello Hel' was 1-1-0-1 (note-note-rest-note), then 'Smoooo..' is 1-1-1-1 because there are no rests. We can observe the 1-1-1-1 decomposition for the first beat in other songs like *Eleanor Rigby* by The Beatles.
+If 'Hello Hel' was `1-1-0-1` (note-note-rest-note), then 'Smoooo..' is `1-1-1-1` because there are no rests. We can observe the `1-1-1-1` decomposition for the first beat in other songs like *Eleanor Rigby* by The Beatles.
 
 #### Popular songs in non-4/4 signature
 
@@ -77,9 +77,41 @@ Ooo   - ohkaa  - aay    - (Rest) - (Rest) - (Rest) - (Rest)
 Tap   - Tap    - Tap    - Tap    - Tap    - Tap    - Tap
 ```
 
-*Four Sticks* by Led Zeppelin uses 5/4 in parts, *Paranoid Android *by Radiohead uses 7/8 in parts, the *Mission Impossible theme* by Lalo Schifrin uses 5/4.
+*Four Sticks* by Led Zeppelin uses 5/4 in parts, *Paranoid Android* by Radiohead uses 7/8 in parts, the *Mission Impossible theme* by Lalo Schifrin uses 5/4.
 
 #### Representing measures
+
+Sixteenth beats give us enough granularity to represent positions in the measure where notes are placed. A 4/4 measure, completely decomposed into sixteenth beats, would look like this:
+
+```
+(1-2-3-4)  -  (5-6-7-8)  -  (9-10-11-12) -  (13-14-15-16)
+1/4 Beat 1 -  1/4 Beat 2 -  1/4 Beat 3   -  1/4 Beat 4
+```
+
+Any of these numbers from 1 to 16 could be notes and rests. For the sake of representation, let's ignore the rests (there can only be notes and rests, so if a number is missing, we know it's a rest). Let's go back to the *Comfortably Numb* example. We decomposed the first beat as `1-1-0-1`. In our new notation of a measure, this would be `1-2-4` (3 is a rest, so it's ignored). Decomposing the other beats, we get:
+
+```
+1   -  1    -  0  -  1
+Hel -  lo   -  _  -  Hel
+
+1   -  0    -  1  -  1
+lo  -  _    - Hel -  lo
+
+0   -  0    -  1  -  1
+_   -  _    -  Is -  there
+
+1   -  1    -  1  -  1
+any -  body -  in -  there
+```
+
+Ignoring the rests, this becomes `(1-2-4) - (5-7-8) - (11-12) - (13-14-15-16)` in our new notation.
+
+```
+[1 2 4 5 7 8 11 12 13 14 15 16]
+```
+
+We just represented the first measure of *Comfortably Numb* in a data structure.
+
 
 The distribution of beats inside a measure can be randomized, though. A measure in `11/8` time signature could be split into `2-2-3-2-2` or `4-3-2-2`, a measure in `4/4` time signature could be split into `2-2`, `3-1`, or so on. Further levels of decomposition can be done where each individual beat is segmented even further into note positions, fills, or rests. The `4` in `4-3-2-2` could, for instance, be decomposed into `1-3-4` where the numbers indicates notes (which would mean the first note extends until 3).
 
