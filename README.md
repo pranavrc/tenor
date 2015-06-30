@@ -147,7 +147,7 @@ We could count the *Mission Impossible* theme using the following meter:
 one-two-three - one-two-three - one-two - one-two
 ```
 
-#### Generating measures
+#### Generating a measure in 11/4
 
 So far, we've looked at decomposing a measure into a meter and further into a list of sixteenth-beats. The meter helps in singling out positions within the measure which *must* contain notes for emphasis, and each sixteenth-beat could either be a note or a rest.
 
@@ -174,15 +174,15 @@ user=> (def meter-11 (generate-meter 11))
 #'user/meter-11
 user=> meter-11
 (1 4 3 3)
-user=> (segment-measure meter-11)
-(1 2 5 6 7 8 9 11)
-user=> (segment-measure meter-11)
-(1 2 3 4 5 6 7 9)
-user=> (segment-measure meter-11)
-(1 2 3 4 6 8 9 10 11)
+user=> (segment-measure meter-11 :note-value 4)
+(1 3 4 5 7 8 9 10 11 13 14 16 19 20 21 23 28 30 32 33 37 39 42 44)
+user=> (segment-measure meter-11 :note-value 4)
+(1 2 4 5 6 8 9 11 12 15 17 19 21 22 23 25 26 28 29 31 32 33 36 37 38 39 40 42 43)
+user=> (segment-measure meter-11 :note-value 4)
+(1 2 3 4 5 7 8 10 11 12 13 16 17 18 19 21 23 24 26 30 32 33 34 35 36 38 39 40 41 43 44)
 ```
 
-Note that for our `1-4-3-3` meter (the *ones* would correspond with 1, 2, 6 and 9 note positions respectively), every generated measure contains a note at the 1, 2, 6 and 9 note positions. A rest can never fall on these positions.
+Note that for our `1-4-3-3` (`4-16-12-12` in sixteenth-beats) meter (the *ones* would correspond with 1, 5, 21 and 33 sixteenth-beat positions respectively), every generated measure contains a note at the 1, 5, 21 and 33 note positions. A rest can never fall on these positions.
 
 
 *...work in progress...*
