@@ -198,7 +198,7 @@ user=> (segment-measure meter-11 :note-value 4 :sparseness 100)
 (1 5 21 33)
 ```
 
-Voila, we have the *ones* from the meter! The rest of the notes were never filled, they all ended up as rests.
+Voila, we have the *ones* from the meter! The other sixteenth-beats were never filled, they all ended up as rests.
 
 
 *...work in progress...*
