@@ -147,18 +147,42 @@ We could count the *Mission Impossible* theme using the following meter:
 one-two-three - one-two-three - one-two - one-two
 ```
 
-The [time-signature](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L21) function takes a beat count for a measure, and generates random beat distributions for that measures of that signature.
+#### Generating measures
+
+So far, we've looked at decomposing a measure into a meter and further into a list of sixteenth-beats. The meter helps in singling out positions within the measure which *must* contain notes for emphasis, and each sixteenth-beat could either be a note or a rest.
+
+The [generate-meter](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L21) function takes a beat count for a measure, and generates a random meter. Here are example meters for the 11/4 and 4/4 time signatures:
 
 ```
-user=> (time-signature 11)
+user=> (generate-meter 11)
 (1 4 3 3)
-user=> (time-signature 11)
-(1 3 3 4)
-user=> (time-signature 4)
-(2 2)
-user=> (time-signature 4)
-(4)
 ```
+
+This is the `one - one-two-three-four - one-two-three - one-two-three` counting pattern where all the ones *must* contain notes and not rests.
+
+```
+user=> (generate-meter 4)
+(2 2)
+```
+
+The `one-two - one-two` meter with ones containing notes.
+
+Now that we have the meter, we can further decompose these into sixteenth-beats using the [segment-measure](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L59) function.
+
+```
+user=> (def meter-11 (generate-meter 11))
+#'user/meter-11
+user=> meter-11
+(1 4 3 3)
+user=> (segment-measure meter-11)
+(1 2 5 6 7 8 9 11)
+user=> (segment-measure meter-11)
+(1 2 3 4 5 6 7 9)
+user=> (segment-measure meter-11)
+(1 2 3 4 6 8 9 10 11)
+```
+
+Note that for our `1-4-3-3` meter (the *ones* would correspond with 1, 2, 6 and 9 note positions respectively), every generated measure contains a note at the 1, 2, 6 and 9 note positions. A rest can never fall on these positions.
 
 
 *...work in progress...*
