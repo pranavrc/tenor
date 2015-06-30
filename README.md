@@ -170,7 +170,7 @@ user=> (generate-meter 4)
 
 The `one-two - one-two` meter with ones containing notes.
 
-Now that we have the meter, we can further decompose these into sixteenth-beats using the [segment-measure](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L59) function.
+Now that we have the meter, we can further decompose these into sixteenth-beats using the [segment-measure](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L59) function. A 11/4 measure would contain `11*16/4 = 44` sixteenth-beats.
 
 ```
 user=> (def meter-11 (generate-meter 11))
