@@ -66,10 +66,13 @@ If 'Hello Hel' was `1-1-0-1` (note-note-rest-note), then 'Smoooo..' is `1-1-1-1`
 ```
 (Rest) - (Rest) - Happy
 Tap    - Tap    - Tap
+
 birth  - day    - to
 Tap    - Tap    - Tap
+
 you    - (Rest) - Happy
 Tap    - Tap    - Tap
+
 birth  - day    - to
 Tap    - Tap    - Tap
 ```
