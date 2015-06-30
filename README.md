@@ -57,7 +57,7 @@ Smo - oo  - oo  - oo
 Tap - Tap - Tap - Tap
 ```
 
-If 'Hello Hel' was `1-1-0-1` (note-note-rest-note), then 'Smoooo..' is `1-1-1-1` because there are no rests. We can observe the `1-1-1-1` decomposition for the first beat in other songs like *Eleanor Rigby* by The Beatles.
+If 'Hello Hel' was `1-1-0-1` (note-note-rest-note), then 'Smoooo..' is `1-1-1-1` because there are no rests. We can observe the `1-1-1-1` decomposition for the first beat in other songs like *Eleanor Rigby* by The Beatles (just the dragged out 'I' syllable).
 
 ##### Popular songs in non-4/4 signature
 
@@ -81,7 +81,7 @@ Tap   - Tap    - Tap    - Tap    - Tap    - Tap    - Tap
 
 ##### Representing measures
 
-Sixteenth beats give us enough granularity to represent positions in the measure where notes are placed. A 4/4 measure, completely decomposed into sixteenth beats, would look like this in positional notation:
+Sixteenth beats give us enough granularity to represent positions in the measure where notes are placed. A 4/4 measure, decomposed into sixteenth beats, would look like this in positional notation:
 
 ```
 (1-2-3-4)  -  (5-6-7-8)  -  (9-10-11-12) -  (13-14-15-16)
@@ -119,7 +119,7 @@ We just represented the first rhythmic measure of *Comfortably Numb* in an order
 [1 2 3 4 7 8 9 10 11 12 13 14 15 16]
 ```
 
-As we can see, only the 5th and 6th sixteenth-beats (immediately after 'Smooooke' and before 'on the') are rests, so the first measure of *Smoke on the Water* turns out to be pretty densely populated with notes.
+As we can see, only the 5th and 6th sixteenth-beats (immediately after 'Smooooke' and before 'on the') are rests, so the first measure of *Smoke on the Water* turns out to be densely populated with notes.
 
 ##### Meters
 
