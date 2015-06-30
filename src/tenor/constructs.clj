@@ -68,7 +68,7 @@
                                      (segment-beat (first measure)
                                                    note-value
                                                    :sparseness sparseness)))
-          running-count (+ running-count (first measure))]
+          running-count (+ running-count (* (/ 16 note-value) (first measure)))]
       (segment-measure (rest measure)
                        :running-count running-count
                        :result result
