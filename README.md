@@ -24,7 +24,7 @@ Here's a [very interesting analysis](http://www.hooktheory.com/blog/i-analyzed-t
 
 Rhythm is, perhaps, the most accessible and instantly decipherable component of a song because it lays out the fundamental structure over which melody and harmony interplay. A single rhythmic theme (say, the 4/4) also repeats fairly often in a song, so measures in a specific time signature need not be procedurally generated.
 
-#### Time Signature
+##### Time Signature
 
 A time-signature governs how many beats (or foot-taps) there are in a measure, and the duration of each beat. A signature in 4/4 simply means that we repeatedly tap 4 times in quarter-note (1/4 - its length depends on the length of the full note) intervals. Here, each tap is a beat and 4 taps make a measure (the repeating basic pattern of the song). Here's how we'd tap our feet to *Comfortably Numb* by Pink Floyd (a popular 4/4 song), for instance:
 
@@ -59,7 +59,7 @@ Tap - Tap - Tap - Tap
 
 If 'Hello Hel' was `1-1-0-1` (note-note-rest-note), then 'Smoooo..' is `1-1-1-1` because there are no rests. We can observe the `1-1-1-1` decomposition for the first beat in other songs like *Eleanor Rigby* by The Beatles.
 
-#### Popular songs in non-4/4 signature
+##### Popular songs in non-4/4 signature
 
 *Money* by Pink Floyd is in 7/4 time. Let's do the tap routine:
 
@@ -79,16 +79,16 @@ Tap   - Tap    - Tap    - Tap    - Tap    - Tap    - Tap
 
 *Four Sticks* by Led Zeppelin uses 5/4 in parts, *Paranoid Android* by Radiohead uses 7/8 in parts, the *Mission Impossible theme* by Lalo Schifrin uses 5/4.
 
-#### Representing measures
+##### Representing measures
 
-Sixteenth beats give us enough granularity to represent positions in the measure where notes are placed. A 4/4 measure, completely decomposed into sixteenth beats, would look like this:
+Sixteenth beats give us enough granularity to represent positions in the measure where notes are placed. A 4/4 measure, completely decomposed into sixteenth beats, would look like this in positional notation:
 
 ```
 (1-2-3-4)  -  (5-6-7-8)  -  (9-10-11-12) -  (13-14-15-16)
 1/4 Beat 1 -  1/4 Beat 2 -  1/4 Beat 3   -  1/4 Beat 4
 ```
 
-Any of these numbers from 1 to 16 could be notes and rests. For the sake of representation, let's ignore the rests (there can only be notes and rests, so if a number is missing, we know it's a rest). Let's go back to the *Comfortably Numb* example. We decomposed the first beat as `1-1-0-1`. In our new notation of a measure, this would be `1-2-4` (3 is a rest, so it's ignored). Decomposing the other beats, we get:
+Any of these numbers from 1 to 16 could be notes or rests. For the sake of representation, let's ignore the rests (there can only be notes and rests, so if a number is missing, we know it's a rest). Let's go back to the *Comfortably Numb* example, whose first beat we decomposed as `1-1-0-1`. In our new notation of a measure, this would be `1-2-4` (3 is a rest, so it's ignored). Decomposing the other beats in our old notation, we get:
 
 ```
 1   -  1    -  0  -  1
@@ -110,10 +110,42 @@ Ignoring the rests, this becomes `(1-2-4) - (5-7-8) - (11-12) - (13-14-15-16)` i
 [1 2 4 5 7 8 11 12 13 14 15 16]
 ```
 
-We just represented the first measure of *Comfortably Numb* in a data structure.
+We just represented the first rhythmic measure of *Comfortably Numb* in an ordered list. Similarly for *Smoke on the Water*, this is:
 
+```
+[1 2 3 4 7 8 9 10 11 12 13 14 15 16]
+```
 
-The distribution of beats inside a measure can be randomized, though. A measure in `11/8` time signature could be split into `2-2-3-2-2` or `4-3-2-2`, a measure in `4/4` time signature could be split into `2-2`, `3-1`, or so on. Further levels of decomposition can be done where each individual beat is segmented even further into note positions, fills, or rests. The `4` in `4-3-2-2` could, for instance, be decomposed into `1-3-4` where the numbers indicates notes (which would mean the first note extends until 3).
+As we can see, only the 5th and 6th sixteenth-beats (immediately after 'Smooooke' and before 'on the') are rests, so the first measure of *Smoke on the Water* turns out to be pretty densely populated with notes.
+
+##### Meters
+
+So far, we only looked at a measure as having beats of the same type (a `4/4` measure had 4 quarter-beats), but this is not an overarching rule for constructing measures.
+
+A [meter](https://en.wikipedia.org/wiki/Meter_%28music%29) tells us how to *count* or *accentuate* beats in a measure. For instance, a measure in 11/4 time signature could be split into `2-2-3-2-2` or `4-3-2-2`, a measure in 4/4 time signature could be split into `2-2`, `3-1`, or so on. These are still comprised of quarter-beats, but the meter simply groups beats together to emphasize stress on certain groups of beats and de-emphasize stress on others. A measure in 11/4 can be counted in any of the following ways:
+
+```
+ one-two - one-two - one-two-three - one-two - one-two
+ one-two-three-four - one-two-three - one-two - one-two
+ one-two-three-four - one-two-three-four - one-two-three
+ ```
+ 
+The grouping could simply mean that the *one* beats are more emphasized (preferably using notes), than the others (could contain notes or rests).
+
+For example, the song *Flower Punk* by Frank Zappa, a song with interchanging 5/4 and 7/4 measures, could be counted using the following meter:
+
+```
+one-two - one-two-three
+one-two - one-two - one-two-three
+one-two - one-two-three
+one-two - one-two - one-two-three
+```
+
+We could count the *Mission Impossible* theme using the following meter:
+
+```
+one-two-three - one-two-three - one-two - one-two
+```
 
 The [time-signature](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L21) function takes a beat count for a measure, and generates random beat distributions for that measures of that signature.
 
