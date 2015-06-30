@@ -184,5 +184,21 @@ user=> (segment-measure meter-11 :note-value 4)
 
 Note that for our `1-4-3-3` (`4-16-12-12` in sixteenth-beats) meter (the *ones* would correspond with 1, 5, 21 and 33 sixteenth-beat positions respectively), every generated measure contains a note at the 1, 5, 21 and 33 note positions. A rest can never fall on these positions.
 
+We introduce a new factor called *sparseness* which determines how dense a measure is (Remember? The first measure of *Smoke on the Water* had way more notes than *Comfortably Numb*). The higher the *sparseness* of a measure, the more rests it contains. The default sparseness is 1, which means a sixteenth-beat has equal chances of being either a note or a rest.
+
+```
+user=> (segment-measure meter-11 :note-value 4 :sparseness 2)
+(1 2 4 5 8 10 13 15 21 23 27 29 30 33 35 41 42 44)
+```
+
+Let's turn up the sparseness to an absurdly high number, say 100:
+
+```
+user=> (segment-measure meter-11 :note-value 4 :sparseness 100)
+(1 5 21 33)
+```
+
+Voila, we have the *ones* from the meter! The rest of the notes were never filled, they all ended up as rests.
+
 
 *...work in progress...*
