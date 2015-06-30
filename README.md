@@ -6,6 +6,8 @@ But popular and contemporary music has tuned the ears of the average listener to
 
 The project is an attempt at constructing primitive music theory and using it as a base to build procedures that can generate melodies, in-tune to the ears of the average listener.
 
+***
+
 ## Contents
 
 - [Music to the human ears](#music-to-the-human-ears)
@@ -17,6 +19,8 @@ The project is an attempt at constructing primitive music theory and using it as
   - [Generating a measure in 11/4](#generating-a-measure-in-114)
   - [Sparseness of a measure](#sparseness-of-a-measure)
   - [TL;DR](#tldr)
+
+***
 
 ### Music to the human ears
 
@@ -32,13 +36,15 @@ Some of these idiosyncrasies could be:
 
 Here's a [very interesting analysis](http://www.hooktheory.com/blog/i-analyzed-the-chords-of-1300-popular-songs-for-patterns-this-is-what-i-found/) on common patterns found in over 1300 popular songs. One way of generating listenable music would be to create procedures that conform to some of these (though not exactly these) norms.
 
+***
+
 ### Rhythm
 
 Rhythm is, perhaps, the most accessible and instantly decipherable component of a song because it lays out the fundamental structure over which melody and harmony interplay. A single rhythmic theme (say, the 4/4) also repeats fairly often in a song, so measures in a specific time signature need not be procedurally generated.
 
 ##### Time Signature
 
-A time-signature governs how many beats (or foot-taps) there are in a measure, and the duration of each beat. A signature in 4/4 simply means that we repeatedly tap 4 times in quarter-note (1/4 - its length depends on the length of the full note) intervals. Here, each tap is a beat and 4 taps make a measure (the repeating basic pattern of the song). Here's how we'd tap our feet to *Comfortably Numb* by Pink Floyd (a popular 4/4 song), for instance:
+A [time signature](https://en.wikipedia.org/wiki/Time_signature) governs how many beats (or foot-taps) there are in a measure, and the duration of each beat. A signature in 4/4 simply means that we repeatedly tap 4 times in quarter-note (1/4 - its length depends on the length of the full note) intervals. Here, each tap is a beat and 4 taps make a measure (the repeating basic pattern of the song). Here's how we'd tap our feet to *Comfortably Numb* by Pink Floyd (a popular 4/4 song), for instance:
 
 ```
 Hello Hel - lo Hello - (Rest) Is there - anybody 
@@ -163,7 +169,7 @@ A [meter](https://en.wikipedia.org/wiki/Meter_%28music%29) tells us how to *coun
  
 The grouping could simply mean that the *one* beats are more emphasized (preferably using notes), than the others (could contain notes or rests).
 
-For example, the song *Flower Punk* by Frank Zappa, a song with interchanging 5/4 and 7/4 measures, could be counted using the following meter:
+For example, the song *Flower Punk* by Frank Zappa, a song with interchanging 5/4 and 7/4 measures, can be counted using the following meter:
 
 ```
 one-two - one-two-three
@@ -172,7 +178,7 @@ one-two - one-two-three
 one-two - one-two - one-two-three
 ```
 
-We could count the *Mission Impossible* theme using the following meter:
+We can count the *Mission Impossible* theme using the following meter:
 
 ```
 one-two-three - one-two-three - one-two - one-two
@@ -256,5 +262,11 @@ user=> (segment-measure meter-11 :note-value 4 :sparseness 2)
 user=> (segment-measure meter-11 :note-value 4 :sparseness 100)
 (1 5 21 33)
 ```
+
+***
+
+### Melody
+
+Melody is, possibly, the identity of a song. It could be considered the prime contributing factor to the *mood* or *feel* of a song. Though a melody cannot exist without a rhythm, both rhythm and harmony can be considered as support structures that enrich the melody. There are probably a huge number of patterns and methods in which listenable melodies can be generated procedurally.
 
 *...work in progress...*
