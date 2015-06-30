@@ -43,7 +43,7 @@ Hel - lo  - (rest)  - Hel
 Tap - Tap - Tap     - Tap
 ```
 
-This tells us that in a measure decomposed into sixteenth notes (assuming we do not cross over into 1/32 and further), notes and rests are, to an extent, randomly interspersed. To reaffirm this, we can look at *Smoke on the Water* by Deep Purple (another popular 4/4 song). Let's take the first measure (remember, 4 foot taps, each of quarter-note length):
+This tells us that in a measure decomposed into sixteenth beats (assuming we do not cross over into 1/32 and further), notes and rests are, to an extent, randomly interspersed. To reaffirm this, we can look at *Smoke on the Water* by Deep Purple (another popular 4/4 song). Let's take the first measure (remember, 4 foot taps, each of quarter-note length):
 
 ```
 Smoooo - ke on the - Waaate - rrrrrrr
@@ -88,23 +88,26 @@ Sixteenth beats give us enough granularity to represent positions in the measure
 1/4 Beat 1 -  1/4 Beat 2 -  1/4 Beat 3   -  1/4 Beat 4
 ```
 
-Any of these numbers from 1 to 16 could be notes or rests. For the sake of representation, let's ignore the rests (there can only be notes and rests, so if a number is missing, we know it's a rest). Let's go back to the *Comfortably Numb* example, whose first beat we decomposed as `1-1-0-1`. In our new notation of a measure, this would be `1-2-4` (3 is a rest, so it's ignored). Decomposing the other beats in our old notation, we get:
+Any of these numbers from 1 to 16 could be notes or rests. For the sake of representation, let's ignore the rests (there can only be notes and rests, so if a number is missing, we know it's a rest). Let's go back to the *Comfortably Numb* example, whose first beat we decomposed as `1-1-0-1`. In our new notation of a measure, this would be `1-2-4` (3 is a rest, so it's ignored). Decomposing the other beats of the measure in the old beat-wise and new positional notations, we get:
 
 ```
+Beat-wise                    |    Positional
+-----------------------------|---------------------------------
+                             |
 1   -  1    -  0  -  1       |    1   -   2   -   4
 Hel -  lo   -  _  -  Hel     |    Hel -   lo  -   Hel
-
+                             |
 1   -  0    -  1  -  1       |    5   -   7   -   8
 lo  -  _    - Hel -  lo      |    lo  -   Hel -   lo
-
+                             |
 0   -  0    -  1  -  1       |    11  -  12
 _   -  _    -  Is -  there   |    Is  -  there
-
+                             |
 1   -  1    -  1  -  1       |    13  - 14   - 15 - 16
 any -  body -  in -  there?  |    any - body - in - there?
 ```
 
-Ignoring the rests, this becomes `(1-2-4) - (5-7-8) - (11-12) - (13-14-15-16)` in our new notation. Let's put these together into a list:
+Ignoring the rests, this becomes `(1-2-4) - (5-7-8) - (11-12) - (13-14-15-16)` in our new positional notation. Let's put these together into a list:
 
 ```
 [1 2 4 5 7 8 11 12 13 14 15 16]
@@ -149,7 +152,7 @@ one-two-three - one-two-three - one-two - one-two
 
 ##### Generating a measure in 11/4
 
-So far, we've looked at decomposing a measure into a meter and further into a list of sixteenth-beats. The meter helps in singling out positions within the measure which *must* contain notes for emphasis, and each sixteenth-beat could either be a note or a rest.
+So far, we've looked at decomposing a measure into a meter and further into a list of sixteenth-beats. The meter helps in singling out sixteenth-beat positions within the measure which *must* contain notes for emphasis, and each of the other sixteenth-beat positions could either contain a note or a rest.
 
 The [generate-meter](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L21) function takes a beat count for a measure, and generates a random meter. Here are example meters for the 11/4 and 4/4 time signatures:
 
