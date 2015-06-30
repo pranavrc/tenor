@@ -61,7 +61,20 @@ If 'Hello Hel' was `1-1-0-1` (note-note-rest-note), then 'Smoooo..' is `1-1-1-1`
 
 ##### Popular songs in non-4/4 signature
 
-*Money* by Pink Floyd is in 7/4 time. Let's do the tap routine:
+*Happy Birthday* is in 3/4 time. Let's do the tap routine for the first four measures:
+
+```
+(Rest) - (Rest) - Happy
+Tap    - Tap    - Tap
+birth  - day    - to
+Tap    - Tap    - Tap
+you    - (Rest) - Happy
+Tap    - Tap    - Tap
+birth  - day    - to
+Tap    - Tap    - Tap
+```
+
+*Money* by Pink Floyd is in 7/4 time.
 
 ```
 Money - (Rest) - (Rest) - (Rest) - (Rest) - (Rest) - (Rest)
