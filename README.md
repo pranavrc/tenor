@@ -16,6 +16,7 @@ The project is an attempt at constructing primitive music theory and using it as
   - [Meters](#meters)
   - [Generating a measure in 11/4](#generating-a-measure-in-114)
   - [Sparseness of a measure](#sparseness-of-a-measure)
+  - [TL;DR](#tldr)
 
 ### Music to the human ears
 
