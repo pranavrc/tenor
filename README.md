@@ -24,7 +24,9 @@ Here's a [very interesting analysis](http://www.hooktheory.com/blog/i-analyzed-t
 
 Rhythm is, perhaps, the most accessible and instantly decipherable component of a song because it lays out the fundamental structure over which melody and harmony interplay. A single rhythmic theme (say, the 4/4) also repeats fairly often in a song, so measures in a specific time signature need not be procedurally generated.
 
-A time-signature governs how many beats (or foot-taps) there are in a measure, and the duration of each beat. A signature in 4/4 simply means that we repeatedly tap 4 times in quarter-note (1/4 - its length depends on the length of the full note) intervals. Here, each tap is a beat and 4 taps make a measure (the repeating basic pattern of the song). Here's how we'd tap our feet to *Comfortably Numb* by Pink Floyd (a 4/4 song), for instance:
+#### Time Signature
+
+A time-signature governs how many beats (or foot-taps) there are in a measure, and the duration of each beat. A signature in 4/4 simply means that we repeatedly tap 4 times in quarter-note (1/4 - its length depends on the length of the full note) intervals. Here, each tap is a beat and 4 taps make a measure (the repeating basic pattern of the song). Here's how we'd tap our feet to *Comfortably Numb* by Pink Floyd (a popular 4/4 song), for instance:
 
 ```
 Hello Hel - lo Hello - (Rest) Is there - anybody 
@@ -41,7 +43,7 @@ Hel - lo  - (rest)  - Hel
 Tap - Tap - Tap     - Tap
 ```
 
-This tells us that in a measure decomposed into sixteenth notes (assuming we do not cross over into 1/32 and further), notes and rests are, to an extent, randomly interspersed. To reaffirm this, we can look at *Smoke on the Water* by Deep Purple (another 4/4 song). Let's take the first measure (remember, 4 foot taps, each of quarter-note length):
+This tells us that in a measure decomposed into sixteenth notes (assuming we do not cross over into 1/32 and further), notes and rests are, to an extent, randomly interspersed. To reaffirm this, we can look at *Smoke on the Water* by Deep Purple (another popular 4/4 song). Let's take the first measure (remember, 4 foot taps, each of quarter-note length):
 
 ```
 Smoooo - ke on the - Waaate - rrrrrrr
@@ -55,8 +57,29 @@ Smo - oo  - oo  - oo
 Tap - Tap - Tap - Tap
 ```
 
-If 'Hello Hel' was 1-1-0-1 (note-note-rest-note), then 'Smoooo..' is 1-1-1-1 because there are no rests.
+If 'Hello Hel' was 1-1-0-1 (note-note-rest-note), then 'Smoooo..' is 1-1-1-1 because there are no rests. We can observe the 1-1-1-1 decomposition for the first beat in other songs like *Eleanor Rigby* by The Beatles.
 
+#### Popular songs in non-4/4 signature
+
+*Money* by Pink Floyd is in 7/4 time. Let's do the tap routine:
+
+```
+Money - (Rest) - (Rest) - (Rest) - (Rest) - (Rest) - (Rest)
+Tap   - Tap    - Tap    - Tap    - Tap    - Tap    - Tap
+
+Get A - way    - (Rest) - (Rest) - (Rest) - (Rest) - (Rest)
+Tap   - Tap    - Tap    - Tap    - Tap    - Tap    - Tap
+
+Get a - good   - job    - with   - more   - pay'n  - you're
+Tap   - Tap    - Tap    - Tap    - Tap    - Tap    - Tap
+
+Ooo   - ohkaa  - aay    - (Rest) - (Rest) - (Rest) - (Rest)
+Tap   - Tap    - Tap    - Tap    - Tap    - Tap    - Tap
+```
+
+*Four Sticks* by Led Zeppelin uses 5/4 in parts, *Paranoid Android *by Radiohead uses 7/8 in parts, the *Mission Impossible theme* by Lalo Schifrin uses 5/4.
+
+#### Representing measures
 
 The distribution of beats inside a measure can be randomized, though. A measure in `11/8` time signature could be split into `2-2-3-2-2` or `4-3-2-2`, a measure in `4/4` time signature could be split into `2-2`, `3-1`, or so on. Further levels of decomposition can be done where each individual beat is segmented even further into note positions, fills, or rests. The `4` in `4-3-2-2` could, for instance, be decomposed into `1-3-4` where the numbers indicates notes (which would mean the first note extends until 3).
 
