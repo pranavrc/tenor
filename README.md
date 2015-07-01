@@ -306,6 +306,8 @@ A4   A#4/Bb4  B4      C5      C#5/Db5   D5      D#5/Eb5   E5      F5      F#5/Gb
 
 [Scales](https://en.wikipedia.org/wiki/Scale_%28music%29) are groups of notes, ascending in frequency. Depending on how a scale is built, it could exhibit a certain mood, characteristic or emotion. The most used types of scales are the major scales and the minor scales, but there are a lot of other types.
 
+The first note of a scale (the note after which the scale) is named, is called the *tonic* of the scale.
+
 [Major scales](https://en.wikipedia.org/wiki/Major_scale) are constructed using the `W-W-H-W-W-W-H` pattern (W-Whole step, H-Half step). For example, the A4 major scale is as follows:
 
 ```
@@ -325,5 +327,20 @@ A4 - B4 - C5 - D5 - E5 - F5 - G5 - A5
 They tend to express *negative* emotions like betrayal, melancholy, tragedy, ominousness and so on, in general.
 
 Here's a document for further reading on [Characteristics of Musical Keys](http://biteyourownelbow.com/keychar.htm).
+
+##### Intervals
+
+An [interval](https://en.wikipedia.org/wiki/Interval_%28music%29) is the difference between two notes or pitches. The smallest interval is the semitone. Here are the intervals for the A4 minor scale (T - Tonic):
+
+```
+A4 - B4 - C5 - D5 - E5 - F5 - G5 - A5
+T  - 1  - 2  - 3  - 4  - 5  - 6  - 7
+```
+
+C5, for instance, is 2 intervals away from A4 in the A4 minor scale. G5 is 6 intervals away.
+
+Moving by a single interval in the scale is called a [*step*](https://en.wikipedia.org/wiki/Steps_and_skips).
+Moving by two or more intervals in the scale is called a [*leap*](https://en.wikipedia.org/wiki/Steps_and_skips).
+
 
 *...work in progress...*
