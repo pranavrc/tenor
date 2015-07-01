@@ -20,19 +20,19 @@
 
 (defn up-leap [degree]
   "One leap up in the scale (More than 2 semitones)."
-  (+ (rand-nth [2 3 4 5 6 7]) degree))
+  (+ (rand-nth [2 3 4 5 6]) degree))
 
 (defn down-leap [degree]
   "One leap down in the scale (More than 2 semitones)."
-  (- (rand-nth [2 3 4 5 6 7]) degree))
+  (- (rand-nth [2 3 4 5 6]) degree))
 
 (defn up-octave [degree]
   "One perfect octave up (Example: C3 to C4)."
-  (+ 8 degree))
+  (+ 7 degree))
 
 (defn down-octave [degree]
   "One perfect octave down (Example: C4 to C3)."
-  (- 8 degree))
+  (- 7 degree))
 
 (defn weighted-random-interval-jumps [scale degree]
   "Generate an interval jump using weighted random selection,
