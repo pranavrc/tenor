@@ -282,7 +282,7 @@ Melody is, possibly, the identity of a song. It can be considered the prime cont
 C  C#/Db  D  D#/Eb  E  F  F#/Gb  G  G#/Ab  A  A#/Bb  B
 ```
 
-`#` indicates a *Sharp* and `b` indicates a *Flat*. Note that there is no `B#/Cb` or `E#/Fb`. This is merely a convention that arose from the constraint that there could only be 12 notes in an *octave*. In some forms of musical notation, E# and B# do exist.
+`#` indicates a *Sharp* and `b` indicates a *Flat*. Sharps, or flats, are indicated by the black keys on the piano. Ever wondered why there is no black key between `B#/Cb` and `E#/Fb`? There *is* no `B#/Cb` or `E#/Fb`. If you sharp a B, you get a C and if you sharp an E you get an F. This is merely a convention that arose from the constraint that there could only be 12 notes in an *octave*. In some forms of musical notation, E# and B# do exist.
 
 The frequency ratio between a note and its previous note is the [twelfth root of two](https://en.wikipedia.org/wiki/Twelfth_root_of_two), or `1.0594`. For instance, `C#0 (17.32 Hz) / C0 (16.35 Hz) = 1.0594`.
 
