@@ -24,6 +24,8 @@ The project is an attempt at constructing primitive music theory and using it as
   - [Octaves](#octaves)
   - [Semitones and Whole tones](#semitones-and-whole-tones)
   - [Scales](#scales)
+  - [Intervals - unison, steps and leaps](#intervals-unison-steps-and-leaps)
+  - [Melodic motion - conjunct and disjunct](#melodic-motion-conjunct-and-disjunct)
 
 ***
 
@@ -328,7 +330,7 @@ They tend to express *negative* emotions like betrayal, melancholy, tragedy, omi
 
 Here's a document for further reading on [Characteristics of Musical Keys](http://biteyourownelbow.com/keychar.htm).
 
-##### Intervals
+##### Intervals - unison, steps and leaps
 
 An [interval](https://en.wikipedia.org/wiki/Interval_%28music%29) is the difference between two notes or pitches. The smallest interval is the semitone. Here are the intervals for the A4 minor scale (T - Tonic):
 
@@ -339,8 +341,36 @@ T  - 1  - 2  - 3  - 4  - 5  - 6  - 7
 
 C5, for instance, is 2 intervals away from A4 in the A4 minor scale. G5 is 6 intervals away.
 
+Moving by zero intervals in the scale (staying on the same note) is called an [*unison*](https://en.wikipedia.org/wiki/Unison).
 Moving by a single interval in the scale is called a [*step*](https://en.wikipedia.org/wiki/Steps_and_skips).
 Moving by two or more intervals in the scale is called a [*leap*](https://en.wikipedia.org/wiki/Steps_and_skips).
 
+##### Melodic motion - conjunct and disjunct
+
+[Melodic motion](https://en.wikipedia.org/wiki/Melodic_motion) characterizes the tendency of a melody to *jump around*. The most common types of melodic motion are *conjunct motion* and *disjunct motion*, though there are lot of other ways in which a melody can be structured.
+
+A melody that exhibits *conjunct motion* consists of a lot of *steps* (single intervals or successive notes) and *unisons* (same notes), and very little *leaps*.
+A melody that exhibits *disjunct motion* consists of a lot of *leaps* (multiple intervals) and very little *steps* and *unisons*.
+
+Most popular music uses *conjunct motion*. The melodies tend to be closely structured around a scale's notes by traversing the scale in steps, whilst avoiding leaps.
+
+Let's pick apart the first few vocal measures of *My Generation* by *The Who*. These are roughly the notes of each of the syllables:
+
+```
+Peo - ple - try - to - put - us - down - talk - in' - 'bout - my - gen - er - a - tion
+G   - G   - F   - F# - C   - C  - Bb   - D    - D   - E     - E  - F   - F# - E - D
+```
+
+This is a tune in the F major scale `F - G - A - A#/Bb - C - D - E - F` with an F# added in. Here's how the melodic motion is (U - Unison, S - Step, L - Leap):
+
+```
+Peo - ple - try - to - put - us - down - talk - in' - 'bout - my - gen - er - a - tion
+G   - G   - F   - F# - C   - C  - Bb   - D    - D   - E     - E  - F   - F# - E - D
+    U     S     S    L     U    S      L      U     S       S    S     S    S   S
+```
+
+That's just *two* leaps while we have *three* unisons and *nine* steps. This is clearly conjunct melodic motion.
+
+Melodic motion is the most important quality of a melody that determines its quality and *listenability*. Simulating melodic motion is going to be the purpose of every procedure we write that generates music.
 
 *...work in progress...*
