@@ -24,8 +24,8 @@ The project is an attempt at constructing primitive music theory and using it as
   - [Octaves](#octaves)
   - [Semitones and Whole tones](#semitones-and-whole-tones)
   - [Scales](#scales)
-  - [Intervals - unison, steps and leaps](#intervals-unison-steps-and-leaps)
-  - [Melodic motion - conjunct and disjunct](#melodic-motion-conjunct-and-disjunct)
+  - [Intervals - unison, steps and leaps](#intervals---unison-steps-and-leaps)
+  - [Melodic motion - conjunct and disjunct](#melodic-motion---conjunct-and-disjunct)
 
 ***
 
