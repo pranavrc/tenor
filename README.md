@@ -26,6 +26,7 @@ The project is an attempt at constructing primitive music theory and using it as
   - [Scales](#scales)
   - [Intervals - unison, steps and leaps](#intervals---unison-steps-and-leaps)
   - [Melodic motion - conjunct and disjunct](#melodic-motion---conjunct-and-disjunct)
+  - [Simulating melodic motion](#simulating-melodic-motion)
 
 ***
 
@@ -372,5 +373,7 @@ G   - G   - F   - F# - C   - C  - Bb   - D    - D   - E     - E  - F   - F# - E 
 That's just *two* leaps while we have *three* unisons and *nine* steps. This is clearly conjunct melodic motion.
 
 Melodic motion is the most important quality of a melody that determines its quality and *listenability*. Simulating melodic motion is going to be the purpose of every procedure we write that generates music.
+
+##### Simulating melodic motion
 
 *...work in progress...*
