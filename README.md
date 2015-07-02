@@ -348,29 +348,38 @@ Moving by two or more intervals in the scale is called a [*leap*](https://en.wik
 
 ##### Melodic motion - conjunct and disjunct
 
-[Melodic motion](https://en.wikipedia.org/wiki/Melodic_motion) characterizes the tendency of a melody to *jump around*. The most common types of melodic motion are *conjunct motion* and *disjunct motion*, though there are lot of other ways in which a melody can be structured.
+[Melodic motion](https://en.wikipedia.org/wiki/Melodic_motion) characterizes the tendency of a melody to *jump around*, or the *contours* of the melody. The most common types of melodic motion are *conjunct motion* and *disjunct motion*, though there are lot of other ways in which a melody can be structured.
 
 A melody that exhibits *conjunct motion* consists of a lot of *steps* (single intervals or successive notes) and *unisons* (same notes), and very little *leaps*.
 A melody that exhibits *disjunct motion* consists of a lot of *leaps* (multiple intervals) and very little *steps* and *unisons*.
 
 Most popular music uses *conjunct motion*. The melodies tend to be closely structured around a scale's notes by traversing the scale in steps, whilst avoiding leaps.
 
-Let's pick apart the first few vocal measures of *My Generation* by *The Who*. These are roughly the notes of each of the syllables:
+Let's pick apart the first four vocal measures of *My Generation* by *The Who*. These are roughly the notes of each of the syllables:
 
 ```
-Peo - ple - try - to - put - us - down - talk - in' - 'bout - my - gen - er - a - tion
-G   - G   - F   - F# - C   - C  - Bb   - D    - D   - E     - E  - F   - F# - E - D
+Peo - ple - try - to 
+G   - G   - F   - F# 
+
+put - us - d' - down
+C   - C  - Bb - Bb
+
+talk - in' - 'bout - my
+D    - D   - E     - E
+
+gen - er - a - tion
+F   - F# - E - D
 ```
 
 This is a tune in the F major scale `F - G - A - A#/Bb - C - D - E - F` with an F# added in. Here's how the melodic motion is (U - Unison, S - Step, L - Leap):
 
 ```
-Peo - ple - try - to - put - us - down - talk - in' - 'bout - my - gen - er - a - tion
-G   - G   - F   - F# - C   - C  - Bb   - D    - D   - E     - E  - F   - F# - E - D
-    U     S     S    L     U    S      L      U     S       S    S     S    S   S
+Peo - ple - try - to - put - us - d' - down - talk - in' - 'bout - my - gen - er - a - tion
+G   - G   - F   - F# - C   - C  - Bb - Bb   - D    - D   - E     - E  - F   - F# - E - D
+    U     S     S    L     U    S    U      L      U     S       S    S     S    S   S
 ```
 
-That's just *two* leaps while we have *three* unisons and *nine* steps. This is clearly conjunct melodic motion.
+That's just *two* leaps while we have *four* unisons and *nine* steps. This is clearly conjunct motion.
 
 Melodic motion is the most important quality of a melody that determines its quality and *listenability*. Simulating melodic motion is going to be the purpose of every procedure we write that generates music.
 
