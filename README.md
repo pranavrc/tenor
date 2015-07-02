@@ -26,7 +26,7 @@ The project is an attempt at constructing primitive music theory and using it as
   - [Scales](#scales)
   - [Intervals - unison, steps and leaps](#intervals---unison-steps-and-leaps)
   - [Melodic motion - conjunct and disjunct](#melodic-motion---conjunct-and-disjunct)
-  - [Simulating melodic motion](#simulating-melodic-motion)
+  - [Simulating melodic motion using weighted random interval jumps](#simulating-melodic-motion-using-weighted-random-interval-jumps)
 
 ***
 
@@ -307,9 +307,9 @@ A4   A#4/Bb4  B4      C5      C#5/Db5   D5      D#5/Eb5   E5      F5      F#5/Gb
 
 ##### Scales
 
-[Scales](https://en.wikipedia.org/wiki/Scale_%28music%29) are groups of notes, ascending in frequency. Depending on how a scale is built, it could exhibit a certain mood, characteristic or emotion. The most used types of scales are the major scales and the minor scales, but there are a lot of other types.
+[Scales](https://en.wikipedia.org/wiki/Scale_%28music%29) are groups of notes, ascending in frequency. [Scale Degrees](https://en.wikipedia.org/wiki/Degree_%28music%29) indicate the position of each note in the scale. The first note of a scale (the note after which the scale) is named, is called the *tonic* of the scale. Its scale degree is 1.
 
-The first note of a scale (the note after which the scale) is named, is called the *tonic* of the scale.
+Depending on how a scale is built, it could exhibit a certain mood, characteristic or emotion. The most used types of scales are the major scales and the minor scales, but there are a lot of other types.
 
 [Major scales](https://en.wikipedia.org/wiki/Major_scale) are constructed using the `W-W-H-W-W-W-H` pattern (W-Whole step, H-Half step). For example, the A4 major scale is as follows:
 
@@ -383,6 +383,76 @@ That's just *two* leaps while we have *four* unisons and *nine* steps. This is c
 
 Melodic motion is the most important quality of a melody that determines its quality and *listenability*. Simulating melodic motion is going to be the purpose of every procedure we write that generates music.
 
-##### Simulating melodic motion
+##### Simulating melodic motion using weighted random interval jumps
+
+Let's take the F major scale, start with the first note F, construct one unison, two up-steps, one 3-interval up-leap, two down-steps, and end with the last note of the scale. That would give us `F - F - G - A - D - C - Bb - F`, or in scale degrees, `1 - 1 - 2 - 3 - 6 - 5 - 4 - 8`. This is typical conjunct motion.
+
+In conjunct motion, since steps are more likely to appear than leaps, let's assign the chances as follows:
+
+```
+Unison - 6%
+Up step - 35%
+Down step - 35%
+Up leap - 8%
+Down leap - 8%
+Octave up - 4%
+Octave down - 4%
+```
+
+The [conjunct-motion](https://github.com/pranavrc/tenor/blob/master/src/tenor/melody.clj#L48) function takes a scale and a scale degree and generates a new degree in the scale by choosing a random interval based on these weights.
+
+```
+user=> (def f-major (scale :f4 :major))
+#'user/f-major
+user=> f-major
+(65 67 69 70 72 74 76 77)
+user=> (conjunct-motion f-major 3)
+2
+user=> (conjunct-motion f-major 3)
+2
+user=> (conjunct-motion f-major 3)
+4
+user=> (conjunct-motion f-major 3)
+2
+user=> (conjunct-motion f-major 3)
+6
+```
+
+We started with the 3rd note (A4), and it generated the second note (down step, note G4) thrice, fourth note (up step, note Bb) once and the sixth note (3-interval leap, note D5) once. It took five tries to generate a leap.
+
+Let's take the same scale, start with the first note F, construct one unison, two 3-interval up-leaps, one down-step, two 2-interval down-leaps, and end with the last note of the scale. That would give us `F - F - Bb - E - D - Bb - G - F`, or in scale degrees, `1 - 1 - 4 - 7 - 6 - 4 - 2 - 8`. This is typical disjunct motion.
+
+In disjunct motion, since leaps are more likely to appear than steps, let's assign the chances as follows:
+
+```
+Unison - 6%
+Up step - 8%%
+Down step - 8%
+Up leap - 30%
+Down leap - 30%
+Octave up - 9%
+Octave down - 9%
+```
+
+The [disjunct-motion](https://github.com/pranavrc/tenor/blob/master/src/tenor/melody.clj#L52) function takes a scale and a scale degree and generates a new degree in the scale based on these new weights.
+
+```
+user=> (def f-major (scale :f4 :major))
+#'user/f-major
+user=> f-major
+(65 67 69 70 72 74 76 77)
+user=> (disjunct-motion f-major 3)
+1
+user=> (disjunct-motion f-major 3)
+6
+user=> (disjunct-motion f-major 3)
+2
+user=> (disjunct-motion f-major 3)
+3
+user=> (disjunct-motion f-major 3)
+8
+```
+
+We started with the same third note (A4), and in the same five tries, we hit three leaps (notes F4, D5 and F5), one step (G4) and one unison (A4).
 
 *...work in progress...*
