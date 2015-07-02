@@ -385,27 +385,27 @@ Melodic motion is the most important quality of a melody that determines its qua
 
 ##### Simulating melodic motion using weighted random interval jumps
 
-Let's take the F major scale, start with the first note F, construct one unison, two up-steps, one 3-interval up-leap, two down-steps, and end with the last note of the scale. That would give us `F - F - G - A - D - C - Bb - F`, or in scale degrees, `1 - 1 - 2 - 3 - 6 - 5 - 4 - 8`. This is typical conjunct motion.
-
-In conjunct motion, since steps are more likely to appear than leaps, let's assign the chances as follows:
-
-```
-Unison - 6%
-Up step - 35%
-Down step - 35%
-Up leap - 8%
-Down leap - 8%
-Octave up - 4%
-Octave down - 4%
-```
-
-The [conjunct-motion](https://github.com/pranavrc/tenor/blob/master/src/tenor/melody.clj#L48) function takes a scale and a scale degree and generates a new degree in the scale by choosing a random interval based on these weights.
+Let's take the F major scale:
 
 ```
 user=> (def f-major (scale :f4 :major))
 #'user/f-major
 user=> f-major
 (65 67 69 70 72 74 76 77)
+```
+
+Let's start with the first note F, construct one unison, two up-steps, one 3-interval up-leap, two down-steps, and end with the last note of the scale. That would give us `F - F - G - A - D - C - Bb - F`, or in scale degrees, `1 - 1 - 2 - 3 - 6 - 5 - 4 - 8`. This is typical conjunct motion.
+
+In conjunct motion, since steps are more likely to appear than leaps, let's assign the chances as follows:
+
+```
+Unison | Up step | Down step | Up leap | Down leap | Octave up | Octave down
+  6%   |   35%   |    35%    |    8%   |     8%    |     4%    |     4%
+```
+
+The [conjunct-motion](https://github.com/pranavrc/tenor/blob/master/src/tenor/melody.clj#L48) function takes a scale and a scale degree and generates a new degree in the scale by choosing a random interval based on these weights.
+
+```
 user=> (conjunct-motion f-major 3)
 2
 user=> (conjunct-motion f-major 3)
@@ -422,25 +422,16 @@ We started with the 3rd note (A4), and it generated the second note (down step, 
 
 Let's take the same scale, start with the first note F, construct one unison, two 3-interval up-leaps, one down-step, two 2-interval down-leaps, and end with the last note of the scale. That would give us `F - F - Bb - E - D - Bb - G - F`, or in scale degrees, `1 - 1 - 4 - 7 - 6 - 4 - 2 - 8`. This is typical disjunct motion.
 
-In disjunct motion, since leaps are more likely to appear than steps, let's assign the chances as follows:
+In disjunct motion, since leaps are more likely to appear than steps, let's reassign the chances as follows:
 
 ```
-Unison - 6%
-Up step - 8%%
-Down step - 8%
-Up leap - 30%
-Down leap - 30%
-Octave up - 9%
-Octave down - 9%
+Unison | Up step | Down step | Up leap | Down leap | Octave up | Octave down
+  6%   |    8%   |     8%    |   30%   |    30%    |     9%    |     9%
 ```
 
 The [disjunct-motion](https://github.com/pranavrc/tenor/blob/master/src/tenor/melody.clj#L52) function takes a scale and a scale degree and generates a new degree in the scale based on these new weights.
 
 ```
-user=> (def f-major (scale :f4 :major))
-#'user/f-major
-user=> f-major
-(65 67 69 70 72 74 76 77)
 user=> (disjunct-motion f-major 3)
 1
 user=> (disjunct-motion f-major 3)
