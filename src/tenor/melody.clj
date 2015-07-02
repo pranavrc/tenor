@@ -51,5 +51,5 @@
 
 (defn disjunct-motion [scale degree]
   "Melodic motion where leaps are more likely to occur than steps."
-  (weighted-random-interval-jumps scale degree '(0.1 0.1 0.1 0.3 0.3 0.05 0.05)))
+  (weighted-random-interval-jumps scale degree '(0.06 0.08 0.08 0.30 0.30 0.09 0.09)))
 
