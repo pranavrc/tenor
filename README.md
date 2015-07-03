@@ -452,7 +452,7 @@ We started with the same third note (A4), and in the same five tries, we hit thr
 
 Using weighted random interval construction, we can generate one note after another and construct a coherent melody that's either *conjunct* or *disjunct*. What if we could do this for every note in a rhythmic measure, and consequently for every rhythmic measure in a musical piece?
 
-The [generate-intervals](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L112) function takes three parameters:
+[generate-intervals](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L112) is a higher-order function that takes three parameters:
 
 - A *procedure* or a fundamental method for simulating melodic motion, such as the methods [conjunct-motion](https://github.com/pranavrc/tenor/blob/master/src/tenor/melody.clj#L48) or [disjunct-motion](https://github.com/pranavrc/tenor/blob/master/src/tenor/melody.clj#L52).
 - A scale.
@@ -491,5 +491,55 @@ user=> (map find-note-name (intervals->notes disjunct-20 f-major))
 ```
 
 Suh-weet! We just generated both conjunct and disjunct melodies by simulating melodic motion.
+
+##### TL;DR Melody
+
+- We construct a scale (F4 major, in our example) using overtone's `scale` function:
+
+```
+user=> (def f-major (scale :f4 :major))
+#'user/f-major
+user=> f-major
+(65 67 69 70 72 74 76 77)
+```
+
+- The functions [conjunct-motion](https://github.com/pranavrc/tenor/blob/master/src/tenor/melody.clj#L48) and [disjunct-motion](https://github.com/pranavrc/tenor/blob/master/src/tenor/melody.clj#L52) take scales and scale degrees as their parameters, and generate a new scale degree based on weighted random interval jumps. The chances of generating a step are higher than a leap in conjunct motion, and vice-versa in disjunct motion:
+
+```
+user=> (conjunct-motion f-major 3)
+2
+user=> (conjunct-motion f-major 3)
+4
+user=> (disjunct-motion f-major 3)
+1
+user=> (disjunct-motion f-major 3)
+6
+```
+
+- We use the higher-order function [generate-intervals](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L112) that takes three parameters (the procedure that generates new degrees, the scale, and the number of notes to generate), to generate multiple interval jumps and create a melodic line using conjunct and disjunct motion:
+
+```
+user=> (def conjunct-20 (generate-intervals conjunct-motion f-major 20))
+#'user/conjunct-20
+user=> conjunct-20
+(1 2 1 5 6 7 3 4 1 2 3 2 3 3 4 3 2 5 6 1)
+user=> (def disjunct-20 (generate-intervals disjunct-motion f-major 20))
+#'user/disjunct-20
+user=> disjunct-20
+(1 7 7 8 4 6 7 1 6 5 8 3 6 3 4 2 8 2 1 8)
+```
+
+- We use a combination of the functions [intervals->notes](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L121) (a function that converts the intervals to actual *overtone* notes in the scale; it takes two arguments, the melody itself, and the scale) and `find-note-name` (overtone function that converts an overtone note into musical notation, suc as 65 to :F4) to convert the generated melodic line from scale degrees to musical notes.
+
+```
+user=> (intervals->notes conjunct-20 f-major)
+(65 67 65 72 74 76 69 70 65 67 69 67 69 69 70 69 67 72 74 65)
+user=> (intervals->notes disjunct-20 f-major)
+(65 76 76 77 70 74 76 65 74 72 77 69 74 69 70 67 77 67 65 77)
+user=> (map find-note-name (intervals->notes conjunct-20 f-major))
+(:F4 :G4 :F4 :C5 :D5 :E5 :A4 :Bb4 :F4 :G4 :A4 :G4 :A4 :A4 :Bb4 :A4 :G4 :C5 :D5 :F4)
+user=> (map find-note-name (intervals->notes disjunct-20 f-major))
+(:F4 :E5 :E5 :F5 :Bb4 :D5 :E5 :F4 :D5 :C5 :F5 :A4 :D5 :A4 :Bb4 :G4 :F5 :G4 :F4 :F5)
+```
 
 *...work in progress...*
