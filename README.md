@@ -18,7 +18,7 @@ The project is an attempt at constructing primitive music theory and using it as
   - [Meters](#meters)
   - [Generating a measure in 11/4](#generating-a-measure-in-114)
   - [Sparseness of a measure](#sparseness-of-a-measure)
-  - [TL;DR](#tldr)
+  - [TL;DR Rhythm](#tldr-rhythm)
 - [Melody](#melody)
   - [Notes](#notes)
   - [Octaves](#octaves)
@@ -28,6 +28,7 @@ The project is an attempt at constructing primitive music theory and using it as
   - [Melodic motion - conjunct and disjunct](#melodic-motion---conjunct-and-disjunct)
   - [Weighted random interval jumps](#weighted-random-interval-jumps)
   - [Simulating melodic motion](#simulating-melodic-motion)
+  - [TL;DR Melody](#tldr-melody)
 
 ***
 
@@ -248,7 +249,7 @@ user=> (segment-measure meter-11 :note-value 4 :sparseness 100)
 
 Voila, we have the *ones* from the meter! The other sixteenth-beats were never filled, they all ended up as rests.
 
-##### TL;DR
+##### TL;DR Rhythm
 
 - We construct a random *meter* for a single measure of a specific time signature using the `generate-meter` function. Say, `(1 4 3 3)` for a 11/4 measure (11 quarter-beats, counted `one - one-two-three-four - one-two-three - one-two-three`).
 ```
