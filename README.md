@@ -529,7 +529,7 @@ user=> disjunct-20
 (1 7 7 8 4 6 7 1 6 5 8 3 6 3 4 2 8 2 1 8)
 ```
 
-- We use a combination of the functions [intervals->notes](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L121) (a function that converts the intervals to actual *overtone* notes in the scale; it takes two arguments, the melody itself, and the scale) and `find-note-name` (overtone function that converts an overtone note into musical notation, suc as 65 to :F4) to convert the generated melodic line from scale degrees to musical notes.
+- We use a combination of the functions [intervals->notes](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L121) (a function that converts the intervals to actual *overtone* notes in the scale; it takes two arguments, the melody itself, and the scale) and `find-note-name` (overtone function that converts an overtone note into musical notation, such as 65 to :F4) to convert the generated melodic line from scale degrees to musical notes.
 
 ```
 user=> (intervals->notes conjunct-20 f-major)
