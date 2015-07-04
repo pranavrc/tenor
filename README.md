@@ -29,6 +29,7 @@ The project is an attempt at constructing primitive music theory and using it as
   - [Weighted random interval jumps](#weighted-random-interval-jumps)
   - [Simulating melodic motion](#simulating-melodic-motion)
   - [TL;DR Melody](#tldr-melody)
+- [Combining Melody with Rhythm](#combining-melody-with-rhythm)
 
 ***
 
@@ -541,5 +542,60 @@ user=> (map find-note-name (intervals->notes conjunct-20 f-major))
 user=> (map find-note-name (intervals->notes disjunct-20 f-major))
 (:F4 :E5 :E5 :F5 :Bb4 :D5 :E5 :F4 :D5 :C5 :F5 :A4 :D5 :A4 :Bb4 :G4 :F5 :G4 :F4 :F5)
 ```
+
+***
+
+### Combining Melody with Rhythm
+
+So far, we've been able to generate a rhythmic measure of a particular time signature, and a rhythm-agnostic melody with notes and melodic motion. Combining these together is pretty straight-forward.
+
+The [generate-rhythm](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L132) function takes the measure count and beat count of each measure, and optionally the minimum note value (sixteen being the default) and sparseness (1 default), and generates the respective number of measures, each of the specified number of beats. For instance, this generates 10 measures, each of 4/4 time signature:
+
+```
+user=> (def rhythm (generate-rhythm 10 4))
+#'user/rhythm
+user=> rhythm
+(1 3 5 7 9 11 13 15 17 19 21 23 25 27 29 31 33 35 37 39)
+user=> (count rhythm)
+20
+```
+
+Now that we have our rhythm, we can combine the `intervals->notes` and `generate-intervals` functions like before, to create a melody that contains as many notes as we have beats in our measure (20 beats):
+
+```
+user=> (def f-major (scale :f4 :major))
+user=> (def conjunct-intervals (generate-intervals conjunct-motion f-major (count rhythm)))
+#'user/conjunct-intervals
+user=> conjunct-intervals
+(1 2 2 4 5 4 5 6 7 8 7 3 3 4 5 1 2 3 1 1)
+user=> (def conjunct-melody (intervals->notes conjunct-intervals f-major))
+#'user/conjunct-melody
+user=> conjunct-melody
+(65 67 67 70 72 70 72 74 76 77 76 69 69 70 72 65 67 69 65 65)
+```
+
+We now have the rhythm and the melody of 20 beats, as follows:
+
+```
+(rhythm)          1   3   5   7   9   11  13  15  17  19  21  23  25  27  29  31  33  35  37  39
+(conjunct-melody) 65  67  67  70  72  70  72  74  76  77  76  69  69  70  72  65  67  69  65  65
+```
+
+The [map-entity](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L127) function takes a rhythm and a melody, and creates a list of hash-maps, each of the format `{:note note :pos beat}`, indicating which note of the melody goes into which beat in the rhythm.
+
+```
+user=> (map-entity rhythm conjunct-melody)
+({:note 65, :pos 1} {:note 67, :pos 3} {:note 67, :pos 5} {:note 70, :pos 7} {:note 72, :pos 9} {:note 70, :pos 11} {:note 72, :pos 13} {:note 74, :pos 15} {:note 76, :pos 17} {:note 77, :pos 19} {:note 76, :pos 21} {:note 69, :pos 23} {:note 69, :pos 25} {:note 70, :pos 27} {:note 72, :pos 29} {:note 65, :pos 31} {:note 67, :pos 33} {:note 69, :pos 35} {:note 65, :pos 37} {:note 65, :pos 39})
+```
+
+The [generate-entity-map](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L142) function wraps all of the above functionality into a single function. It takes all the parameters that we provided to other functions earlier - the procedure to simulate melodic motion, the measure count, beat count, and optionally, the note value, sparseness and scale - and creates hash-maps using `map-entity`.
+
+```
+user=> (generate-entity-map conjunct-motion 10 4 :scale (scale :f4 :major))
+({:note 65, :pos 1} {:note 67, :pos 2} {:note 72, :pos 4} {:note 74, :pos 5} {:note 76, :pos 6} {:note 65, :pos 8} {:note 74, :pos 9} {:note 72, :pos 10} {:note 74, :pos 12} {:note 72, :pos 13} {:note 74, :pos 14} {:note 67, :pos 16} {:note 65, :pos 17} {:note 67, :pos 18} {:note 72, :pos 20} {:note 65, :pos 21} {:note 65, :pos 22} {:note 67, :pos 24} {:note 69, :pos 25} {:note 67, :pos 26} {:note 70, :pos 28} {:note 77, :pos 29} {:note 65, :pos 30} {:note 67, :pos 32} {:note 72, :pos 33} {:note 70, :pos 34} {:note 69, :pos 36} {:note 70, :pos 37} {:note 72, :pos 38} {:note 77, :pos 40})
+```
+
+And that's it! We have a barebones *musical piece* with rhythm and melody. Now we can move on to ~~peace and~~ harmony!
+
 
 *...work in progress...*
