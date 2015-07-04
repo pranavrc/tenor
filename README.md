@@ -517,7 +517,7 @@ user=> (disjunct-motion f-major 3)
 6
 ```
 
-- We use the higher-order function [generate-intervals](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L112) that takes three parameters (the procedure that generates new degrees, the scale, and the number of notes to generate), to generate multiple interval jumps and create a melodic line using conjunct and disjunct motion:
+- We use the higher-order function [generate-intervals](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L112) that takes three parameters (the procedure that generates new degrees, the scale, and the number of notes to generate), to generate multiple interval jumps and create a melodic line using conjunct and disjunct motion. It always starts and ends at the tonic (or one octave above), because a musical piece that doesn't end on the tonic doesn't feel *complete*.
 
 ```
 user=> (def conjunct-20 (generate-intervals conjunct-motion f-major 20))
