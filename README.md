@@ -599,14 +599,16 @@ We now have the rhythm and the melody of 20 beats, as follows:
 The [map-entity](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L127) function takes a rhythm and a melody, and creates a list of hash-maps, each of the format `{:note note :pos beat}`, indicating which note of the melody goes into which beat in the rhythm.
 
 ```
-user=> (map-entity rhythm conjunct-melody)
+user=> (def musical-piece (map-entity rhythm conjunct-melody))
+#'user/musical-piece
+user=> musical-piece
 ({:note 65, :pos 1} {:note 67, :pos 3} {:note 67, :pos 5} {:note 70, :pos 7} {:note 72, :pos 9} {:note 70, :pos 11} {:note 72, :pos 13} {:note 74, :pos 15} {:note 76, :pos 17} {:note 77, :pos 19} {:note 76, :pos 21} {:note 69, :pos 23} {:note 69, :pos 25} {:note 70, :pos 27} {:note 72, :pos 29} {:note 65, :pos 31} {:note 67, :pos 33} {:note 69, :pos 35} {:note 65, :pos 37} {:note 65, :pos 39})
 ```
 
 The [generate-entity-map](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L142) function wraps all of the above functionality into a single function. It takes all the parameters that we provided to other functions earlier - the procedure to simulate melodic motion, the measure count, beat count, and optionally, the note value, sparseness and scale - and creates hash-maps using `map-entity`.
 
 ```
-user=> (generate-entity-map conjunct-motion 10 4 :scale (scale :f4 :major))
+user=> (generate-entity-map conjunct-motion 10 4 :scale (scale :f4 :major)))
 ({:note 65, :pos 1} {:note 67, :pos 2} {:note 72, :pos 4} {:note 74, :pos 5} {:note 76, :pos 6} {:note 65, :pos 8} {:note 74, :pos 9} {:note 72, :pos 10} {:note 74, :pos 12} {:note 72, :pos 13} {:note 74, :pos 14} {:note 67, :pos 16} {:note 65, :pos 17} {:note 67, :pos 18} {:note 72, :pos 20} {:note 65, :pos 21} {:note 65, :pos 22} {:note 67, :pos 24} {:note 69, :pos 25} {:note 67, :pos 26} {:note 70, :pos 28} {:note 77, :pos 29} {:note 65, :pos 30} {:note 67, :pos 32} {:note 72, :pos 33} {:note 70, :pos 34} {:note 69, :pos 36} {:note 70, :pos 37} {:note 72, :pos 38} {:note 77, :pos 40})
 ```
 
@@ -632,6 +634,29 @@ There are numerous other ways of constructing chords (augmented, diminished, sus
 
 Using `generate-entity-map`, we built a map of `{:pos beat, :note note}` pairs and generated a musical piece with just rhythm and melody. Time to *harmonize* it.
 
+The [harmony](https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj) namespace contains procedures that construct chords from notes. For instance, the [major-chords-octave-down](https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj#L21) function takes a note, constructs the major chord of the note shifted down by one octave (Example, F3 major chord if the note is F4), and returns a hash-map `{:pos beat :note major-chord-of-note-shifted-one-octave-down}` of that note.
+
 The [chordify](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L156) higher-order function takes the map of our musical piece, and a *procedure* or fundamental method to build a chord out of a note (just like our `generate-intervals` function took `conjunct-motion` or `disjunct-motion` as parameters, remember?). It then takes our musical piece, picks out a few notes randomly, and generates a new musical piece with chords instead of notes at the same positions.
+
+```
+user=> musical-piece
+({:note 65, :pos 1} {:note 67, :pos 3} {:note 67, :pos 5} {:note 70, :pos 7} {:note 72, :pos 9} {:note 70, :pos 11} {:note 72, :pos 13} {:note 74, :pos 15} {:note 76, :pos 17} {:note 77, :pos 19} {:note 76, :pos 21} {:note 69, :pos 23} {:note 69, :pos 25} {:note 70, :pos 27} {:note 72, :pos 29} {:note 65, :pos 31} {:note 67, :pos 33} {:note 69, :pos 35} {:note 65, :pos 37} {:note 65, :pos 39})
+user=> (def chords (chordify musical-piece major-chords-octave-down))
+#'user/chords
+user=> chords
+({:note [53 57 60], :pos 1} {:note [55 59 62], :pos 5} {:note [60 64 67], :pos 9} {:note [60 64 67], :pos 13} {:note [57 61 64], :pos 25} {:note [53 57 60], :pos 31} {:note [57 61 64], :pos 35})
+```
+
+Now that we have the chords, let's lay out our 20-beat musical piece again:
+
+```
+(rhythm)          1   3   5   7   9   11  13  15  17  19  21  23  25  27  29  31  33  35  37  39
+(conjunct-melody) 65  67  67  70  72  70  72  74  76  77  76  69  69  70  72  65  67  69  65  65
+(chords)          53      55      60      60                      57          53      57 
+                  57      59      64      64                      61          57      61  
+                  60      62      67      67                      64          60      64
+```
+
+And there we go! Our 20-beat musical piece in 4/4 is now complete!
 
 *...work in progress...*
