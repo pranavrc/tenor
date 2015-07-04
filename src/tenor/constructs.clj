@@ -129,7 +129,9 @@
   and musical notes as values."
   (map #(hash-map :pos %1, :note %2) entity intervals))
 
-(defn generate-piece [measure-count beat-count note-value sparseness]
+(defn generate-piece [measure-count beat-count
+                      & {:keys [note-value sparseness]
+                         :or {note-value 16 sparseness 1}}]
   "Generate a musical piece with measure-count measures,
   each of time signature with beat-count and note-value."
   (let [time-sig (generate-meter beat-count)
