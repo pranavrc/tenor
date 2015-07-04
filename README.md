@@ -6,6 +6,8 @@ But popular and contemporary music has tuned the ears of the average listener to
 
 The project is an attempt at constructing primitive music theory and using it as a base to build procedures that can generate melodies, in-tune to the ears of the average listener. Most of the heavy lifting is done by [Clojure](http://clojure.org/) and [Overtone](http://overtone.github.io/); we just build simple abstractions to represent concepts and patterns in music theory and use them to generate musical pieces.
 
+This ~~article~~ \**cough*\* essay will hopefully serve as a primer to music theory whilst also describing its construction, and consequently the generation of music, in Clojure.
+
 ***
 
 ## Contents
@@ -30,6 +32,7 @@ The project is an attempt at constructing primitive music theory and using it as
   - [Simulating melodic motion](#simulating-melodic-motion)
   - [TL;DR Melody](#tldr-melody)
 - [Combining Melody with Rhythm](#combining-melody-with-rhythm)
+- [Harmony](#harmony)
 
 ***
 
@@ -596,6 +599,10 @@ user=> (generate-entity-map conjunct-motion 10 4 :scale (scale :f4 :major))
 ```
 
 And that's it! We have a barebones *musical piece* with rhythm and melody. Now we can move on to ~~peace and~~ harmony!
+
+***
+
+### Harmony
 
 
 *...work in progress...*
