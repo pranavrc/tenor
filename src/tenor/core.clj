@@ -1,12 +1,14 @@
 (ns tenor.core
   (:use [overtone.live]
         [overtone.inst.piano]
-        [tenor.constructs]))
+        [tenor.constructs]
+        [tenor.melody]
+        [tenor.harmony]))
 
 (defn play-note [instrument note]
  (instrument note))
 
-(defn play-chord [instrument note]
-  (doseq [note (chord (find-note-name note) (rand-nth (keys SCALE)))]
+(defn play-chord [instrument chord]
+  (doseq [note chord]
     (play-note instrument note)))
 
