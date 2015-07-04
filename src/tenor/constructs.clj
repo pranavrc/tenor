@@ -129,15 +129,15 @@
   and musical notes as values."
   (map #(hash-map :pos %1, :note %2) entity intervals))
 
-(defn generate-piece [measure-count beat-count
+(defn generate-rhythm [measure-count beat-count
                       & {:keys [note-value sparseness]
                          :or {note-value 16 sparseness 1}}]
-  "Generate a musical piece with measure-count measures,
+  "Generate a rhythm with measure-count measures,
   each of time signature with beat-count and note-value."
   (let [time-sig (generate-meter beat-count)
         segmented (segment-measure time-sig note-value sparseness)
-        piece (repeat measure-count segmented)]
-    (string-measures piece beat-count)))
+        rhythm (repeat measure-count segmented)]
+    (string-measures rhythm beat-count)))
 
 (defn generate-entity-map [construct-melody measure-count beat-count
                             & {:keys [note-value sparseness scale]
@@ -146,10 +146,10 @@
                                     scale (generate-random-scale)}}]
   "Take a function to construct a melody, measure count, note count and note value,
   and generate a measure map of the melody and rhythm using map-entity."
-  (let [piece (generate-piece measure-count beat-count note-value sparseness)
+  (let [rhythm (generate-rhythm measure-count beat-count note-value sparseness)
         scale-intervals (intervals->notes
-                          (generate-intervals construct-melody scale (count piece)) scale)]
-  (map-entity piece scale-intervals)))
+                          (generate-intervals construct-melody scale (count rhythm)) scale)]
+  (map-entity rhythm scale-intervals)))
 
 ;; --- Chords --- ;;
 
