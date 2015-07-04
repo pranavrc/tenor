@@ -33,6 +33,8 @@ This ~~article~~ \**cough*\* essay will hopefully serve as a primer to music the
   - [TL;DR Melody](#tldr-melody)
 - [Combining Melody with Rhythm](#combining-melody-with-rhythm)
 - [Harmony](#harmony)
+  - [Chords and Arpeggios](#chords-and-arpeggios)
+  - [*Chordifying* a musical piece](#chordifying-a-musical-piece)
 
 ***
 
@@ -625,5 +627,11 @@ A [*major chord*](https://en.wikipedia.org/wiki/Major_chord) is constructed by t
 A [*minor chord*](https://en.wikipedia.org/wiki/Minor_chord) is constructed by taking the root note, the *minor third* (3 semitones forward) and the *perfect fifth*. The C-minor chord is `C - D#/Eb - G`.
 
 There are numerous other ways of constructing chords (augmented, diminished, suspended etc), but just like the major and minor scales, the major and minor chords are the most popular.
+
+##### *Chordifying* a musical piece
+
+Using `generate-entity-map`, we built a map of `{:pos beat, :note note}` pairs and generated a musical piece with just rhythm and melody. Time to *harmonize* it.
+
+The [chordify](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L156) higher-order function takes the map of our musical piece, and a *procedure* or fundamental method to build a chord out of a note (just like our `generate-intervals` function took `conjunct-motion` or `disjunct-motion` as parameters, remember?). It then takes our musical piece, picks out a few notes randomly, and generates a new musical piece with chords instead of notes at the same positions.
 
 *...work in progress...*
