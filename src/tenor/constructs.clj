@@ -157,7 +157,8 @@
   "Map an external procedure that constructs chords from notes,
   to the entire map of notes and positions."
   (filter (fn [x] (not (nil? x)))
-          (map #(construct-harmony (:pos %) (:note %)) entity-map)))
+          (map #(if (weighted-coin 0.33)
+                  (construct-harmony (:pos %) (:note %))) entity-map)))
 
 ;; --- Playback --- ;;
 
