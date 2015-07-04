@@ -152,7 +152,8 @@
 ;; --- Chords --- ;;
 
 (defn chordify [entity-map construct-harmony]
-  "Pick random notes from an entity map to assign chords."
+  "Map an external procedure that constructs chords from notes,
+  to the entire map of notes and positions."
   (filter (fn [x] (not (nil? x)))
           (map #(construct-harmony (:pos %) (:note %)) entity-map)))
 
