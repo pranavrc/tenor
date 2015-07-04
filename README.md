@@ -352,6 +352,16 @@ Moving by zero intervals in the scale (staying on the same note) is called an [*
 Moving by a single interval in the scale is called a [*step*](https://en.wikipedia.org/wiki/Steps_and_skips).
 Moving by two or more intervals in the scale is called a [*leap*](https://en.wikipedia.org/wiki/Steps_and_skips).
 
+In an octave, based on relative terms to the first note, each note has a designation that indicates the number of semitones required to reach it. These are the [main intervals](https://en.wikipedia.org/wiki/Interval_%28music%29#Main_intervals):
+
+```
+A4     | A#4/Bb4      | B4           | C5          | C#5/Db5     | D5             |
+Unison | Minor second | Major second | Minor third | Major third | Perfect fourth |
+
+D#5/Eb5       | E5          | F5          | F#5/Gb5       | G5            | G#5/Ab5        |
+Perfect fifth | Minor sixth | Major sixth | Minor seventh | Major seventh | Perfect octave |
+```
+
 ##### Melodic motion - conjunct and disjunct
 
 [Melodic motion](https://en.wikipedia.org/wiki/Melodic_motion) characterizes the tendency of a melody to *jump around*, or the *contours* of the melody. The most common types of melodic motion are *conjunct motion* and *disjunct motion*, though there are lot of other ways in which a melody can be structured.
@@ -604,5 +614,16 @@ And that's it! We have a barebones *musical piece* with rhythm and melody. Now w
 
 ### Harmony
 
+If Melody is horizontal in time, [Harmony](https://en.wikipedia.org/wiki/Harmony) is vertical. Harmony uses simultaneously played notes, or *chords*, to create textures that act as a rich backdrop for the melody. Melody without harmony is like the painting of a beautiful mountainside, drawn against a plain white background instead of the sky.
+
+##### Chords and Arpeggios
+
+[Chords](https://en.wikipedia.org/wiki/Chord_%28music%29) are notes played simultaneously. These are usually harmonious notes that, when played together, produce a sound that's something more than the sum of their parts. If the same notes are played in a sequence instead of simultaneously, they become an [Arpeggio](https://en.wikipedia.org/wiki/Arpeggio).
+
+A [*major chord*](https://en.wikipedia.org/wiki/Major_chord) is constructed by taking the root note, the note that is its *major third* (4 semitones forward) and its *perfect fifth* (7 semitones forward). For instance, C-major chord is `C - E - G`.
+
+A [*minor chord*](https://en.wikipedia.org/wiki/Minor_chord) is constructed by taking the root note, the *minor third* (3 semitones forward) and the *perfect fifth*. The C-minor chord is `C - D#/Eb - G`.
+
+There are numerous other ways of constructing chords (augmented, diminished, suspended etc), but just like the major and minor scales, the major and minor chords are the most popular.
 
 *...work in progress...*
