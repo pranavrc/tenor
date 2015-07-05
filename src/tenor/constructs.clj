@@ -162,15 +162,15 @@
 
 ;; --- Playback --- ;;
 
-(defmacro construct-note [time player entity]
+(defmacro play-note [time player entity]
   "Take time, instrument and note entity as arguments,
   and return overtone code that plays the note."
   `(list 'at ~time (list ~player ~entity)))
 
 (defmacro construct-piece [entity-maps base-time player pivot-time]
-  "Take an entity map and run construct-note on each
+  "Take an entity map and run play-note on each
   note, creating a list of overtone playback code components."
-  `(map #(construct-note (+ ~pivot-time (* (:pos %) ~base-time))
+  `(map #(play-note (+ ~pivot-time (* (:pos %) ~base-time))
                          ~player (:note %))
         ~entity-maps))
 
