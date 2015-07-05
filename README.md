@@ -36,6 +36,9 @@ This ~~article~~ \**cough*\* essay will hopefully serve as a primer in music the
 - [Harmony](#harmony)
   - [Chords and Arpeggios](#chords-and-arpeggios)
   - [*Chordifying* a musical piece](#chordifying-a-musical-piece)
+- [Macroland - Music as Code and Code as Music](#macroland-music-as-code-and-code-as-music)
+  - [Playing notes in Overtone](#playing-notes-in-overtone)
+  - [Generating code for our musical piece](#generating-overtone-code-for-our-musical-piece)
 
 ***
 
@@ -628,7 +631,7 @@ We now have the rhythm and the melody of 20 beats, as follows:
 (conjunct-melody) 65  67  67  70  72  70  72  74  76  77  76  69  69  70  72  65  67  69  65  65
 ```
 
-The [map-entity](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L127) function takes a rhythm and a melody, and creates a list of hash-maps, each of the format `{:note note :pos beat}`, indicating which note of the melody goes into which beat in the rhythm.
+The [map-entity](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L127) function takes a rhythm and a melody, and creates a list of hash-maps, each of the format `{:note note, :pos beat}`, indicating which note of the melody goes into which beat in the rhythm.
 
 ```
 user=> (def musical-piece (map-entity rhythm conjunct-melody))
@@ -664,7 +667,7 @@ There are numerous other ways of constructing chords (augmented, diminished, sus
 
 ##### *Chordifying* a musical piece
 
-Using `generate-entity-map`, we built a map of `{:pos beat, :note note}` pairs and generated a musical piece with just rhythm and melody. Time to *harmonize* it.
+Using `generate-entity-map`, we built a map of `{:note note, :pos beat}` pairs and generated a musical piece with just rhythm and melody. Time to *harmonize* it.
 
 The [harmony](https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj) namespace contains procedures that construct chords from notes. For instance, the [major-chords-octave-down](https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj#L21) function takes a note, constructs the major chord of the note shifted down by one octave (Example, F3 major chord if the note is F4), and returns a hash-map `{:pos beat :note major-chord-of-note-shifted-one-octave-down}` of that note.
 
@@ -690,5 +693,33 @@ Now that we have the chords, let's lay out our 20-beat musical piece again:
 ```
 
 And there we go! Our 20-beat musical piece in 4/4 is now complete!
+
+***
+
+### Macroland - Music as Code and Code as Music
+
+*All work and no play makes Jack a dull chap - Van Morrison*
+
+Now that we have the maps for both melody and chords in hand, we can now play them! We're gonna write some new code ~~that generates music~~ that generates *code* that generates music.
+
+##### Playing notes in Overtone
+
+Here's how we'd play a note in overtone: `(at epoch-time (instrument note))`
+
+Here's an example: `(at 1436066513081 (piano 67))`
+
+The `now` function returns the current epoch time, so now we have: `(at (now) (piano 67))`
+
+Say we had a short melody of one measure `({:note 67, :pos 1} {:note 65, :pos 2} {:note 67, :pos 3} {:note 65, :pos 3})` with a beat-length of 250 milliseconds (4 beats, 1 second total). Let's play this measure with Overtone:
+
+```
+user=> (let [time (now)]
+         (at (+ (* 250 1) time) (piano 67))
+         (at (+ (* 250 2) time) (piano 65))
+         (at (+ (* 250 3) time) (piano 67))
+         (at (+ (* 250 4) time) (piano 65)))
+```
+
+##### Generating code for our musical piece
 
 *...work in progress...*
