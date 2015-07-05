@@ -10,5 +10,5 @@
 
 (defn play-chord-with-instrument [instrument chord]
   (doseq [note chord]
-    (play-note instrument note)))
+    (play-note-with-instrument instrument note)))
 
