@@ -723,11 +723,32 @@ user=> (let [time (now)]
 
 ##### Generating code for our musical piece
 
-The [play-piece](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L177) function takes our musical piece (as a map), the duration of each beat, and the instrument function as parameters. It generates Overtone code to play the music. Let's try this first with our small one-measure melody:
+The [play-piece](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L177) macro takes our musical piece (as a map), the duration of each beat, and the instrument function as parameters. It generates Overtone code to play the music. Let's try this first with our small one-measure melody:
 
 ```
 user=> (play-piece '({:note 67, :pos 1} {:note 65, :pos 2} {:note 67, :pos 3} {:note 65, :pos 4}) 250 (fn [note] (piano note)))
 (clojure.core/let [time (overtone.live/now)] (overtone.live/at (clojure.core/+ time 250) (#<user$eval19948$fn__19949 user$eval19948$fn__19949@4c68278f> 67)) (overtone.live/at (clojure.core/+ time 500) (#<user$eval19948$fn__19949 user$eval19948$fn__19949@4c68278f> 65)) (overtone.live/at (clojure.core/+ time 750) (#<user$eval19948$fn__19949 user$eval19948$fn__19949@4c68278f> 67)) (overtone.live/at (clojure.core/+ time 1000) (#<user$eval19948$fn__19949 user$eval19948$fn__19949@4c68278f> 65)))
 ```
+
+Now, with the melody and chords of our *musical piece*:
+
+```
+user=> musical-piece
+({:note 65, :pos 1} {:note 67, :pos 3} {:note 67, :pos 5} {:note 70, :pos 7} {:note 72, :pos 9} {:note 70, :pos 11} {:note 72, :pos 13} {:note 74, :pos 15} {:note 76, :pos 17} {:note 77, :pos 19} {:note 76, :pos 21} {:note 69, :pos 23} {:note 69, :pos 25} {:note 70, :pos 27} {:note 72, :pos 29} {:note 65, :pos 31} {:note 67, :pos 33} {:note 69, :pos 35} {:note 65, :pos 37} {:note 65, :pos 39})
+user=> (def code-for-melody (play-piece musical-piece 250 (fn [note] (piano note))))
+#'user/code-for-melody
+user=> code-for-melody
+(clojure.core/let [time (overtone.live/now)] (overtone.live/at (clojure.core/+ time 250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 65)) (overtone.live/at (clojure.core/+ time 750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 67)) (overtone.live/at (clojure.core/+ time 1250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 67)) (overtone.live/at (clojure.core/+ time 1750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 70)) (overtone.live/at (clojure.core/+ time 2250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 72)) (overtone.live/at (clojure.core/+ time 2750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 70)) (overtone.live/at (clojure.core/+ time 3250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 72)) (overtone.live/at (clojure.core/+ time 3750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 74)) (overtone.live/at (clojure.core/+ time 4250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 76)) (overtone.live/at (clojure.core/+ time 4750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 77)) (overtone.live/at (clojure.core/+ time 5250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 76)) (overtone.live/at (clojure.core/+ time 5750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 69)) (overtone.live/at (clojure.core/+ time 6250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 69)) (overtone.live/at (clojure.core/+ time 6750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 70)) (overtone.live/at (clojure.core/+ time 7250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 72)) (overtone.live/at (clojure.core/+ time 7750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 65)) (overtone.live/at (clojure.core/+ time 8250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 67)) (overtone.live/at (clojure.core/+ time 8750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 69)) (overtone.live/at (clojure.core/+ time 9250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 65)) (overtone.live/at (clojure.core/+ time 9750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 65)))
+user=> chords
+({:note [53 57 60], :pos 1} {:note [55 59 62], :pos 5} {:note [60 64 67], :pos 9} {:note [60 64 67], :pos 13} {:note [57 61 64], :pos 25} {:note [53 57 60], :pos 31} {:note [57 61 64], :pos 35})
+user=> (def code-for-chords (play-piece chords 250 (fn [note] (piano note))))
+#'user/code-for-chords
+user=> code-for-chords
+(clojure.core/let [time (overtone.live/now)] (overtone.live/at (clojure.core/+ time 250) (#<user$eval19988$fn__19989 user$eval19988$fn__19989@711b461c> [53 57 60])) (overtone.live/at (clojure.core/+ time 1250) (#<user$eval19988$fn__19989 user$eval19988$fn__19989@711b461c> [55 59 62])) (overtone.live/at (clojure.core/+ time 2250) (#<user$eval19988$fn__19989 user$eval19988$fn__19989@711b461c> [60 64 67])) (overtone.live/at (clojure.core/+ time 3250) (#<user$eval19988$fn__19989 user$eval19988$fn__19989@711b461c> [60 64 67])) (overtone.live/at (clojure.core/+ time 6250) (#<user$eval19988$fn__19989 user$eval19988$fn__19989@711b461c> [57 61 64])) (overtone.live/at (clojure.core/+ time 7750) (#<user$eval19988$fn__19989 user$eval19988$fn__19989@711b461c> [53 57 60])) (overtone.live/at (clojure.core/+ time 8750) (#<user$eval19988$fn__19989 user$eval19988$fn__19989@711b461c> [57 61 64])))
+```
+
+Did you see that? We just took the generated code and stored them in *variables*! Lisp, folks. More on the power of [Macros](http://c2.com/cgi/wiki?LispMacro) and [Metaprogramming](https://en.wikipedia.org/wiki/Metaprogramming).
+
+So now the variable `code-for-melody` contains the code that generates our melody, and `code-for-chords`, the code for the chords.
 
 *...work in progress...*
