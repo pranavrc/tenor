@@ -42,6 +42,7 @@ This ~~article~~ \**cough*\* essay will hopefully serve as a primer in music the
   - [Generating code for our musical piece](#generating-code-for-our-musical-piece)
   - [Running our code with `eval`](#running-our-code-with-eval)
   - [Parallel processing with `pmap`](#parallel-processing-with-pmap)
+  - [Recording the music](#recording-the-music)
   - [TL;DR Playback](#tldr-playback)
 
 ***
@@ -820,6 +821,21 @@ user=> (generate-parallel-voices code-for-melody code-for-chords)
 
 We just listened to our *musical piece*, together with rhythm, melody and harmony!
 
+##### Recording the music
+
+Overtone provides two functions: `recording-start` and `recording-stop`, to save sound output to a file.
+
+```
+user=> (recording-start "~/f4major.wav")
+:recording-started
+user=> (generate-parallel-voices code-for-melody code-for-chords)
+(#< clojure.lang.PersistentList$1@4180ac0a> #<synth-node[loading]: overtone.inst.piano/piano 711> nil)
+user=> (recording-stop)
+"~/f4major.wav"
+```
+
+We can now find the .wav file at the path `~/f4major.wav`.
+
 ##### TL;DR Playback
 
 - We use the [play-piece](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L177) function that takes our musical piece (as a map), the duration of each beat, and the instrument function as parameters, and run it on our `musical-piece` and `chords`. `play-piece` uses the [macros](http://clojure.org/macros) [construct-piece](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L172) and [play-note](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L165) to generate *Overtone code* to play our music.
@@ -846,7 +862,18 @@ user=> (generate-parallel-voices code-for-melody code-for-chords)
 (#< clojure.lang.PersistentList$1@4180ac0a> #<synth-node[loading]: overtone.inst.piano/piano 711> nil)
 ```
 
-- We sit back and hear the music.
+- To record the generated music, we use `recording-start` and `recording-stop`.
+
+```
+user=> (recording-start "~/f4major.wav")
+:recording-started
+user=> (generate-parallel-voices code-for-melody code-for-chords)
+(#< clojure.lang.PersistentList$1@4180ac0a> #<synth-node[loading]: overtone.inst.piano/piano 711> nil)
+user=> (recording-stop)
+"~/f4major.wav"
+```
+
+- We sit back and listen to the music.
 
 
 *...work in progress...*
