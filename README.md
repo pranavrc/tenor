@@ -39,6 +39,8 @@ This ~~article~~ \**cough*\* essay will hopefully serve as a primer in music the
 - [Macroland - Music as Code and Code as Music](#macroland---music-as-code-and-code-as-music)
   - [Playing notes in Overtone](#playing-notes-in-overtone)
   - [Generating code for our musical piece](#generating-code-for-our-musical-piece)
+  - [Running our code with `eval`](#running-our-code-with-eval)
+  - [Parallel processing with `pmap`](#parallel-processing-with-pmap)
 
 ***
 
@@ -741,7 +743,7 @@ user=> code-for-melody
 (clojure.core/let [time (overtone.live/now)] (overtone.live/at (clojure.core/+ time 250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 65)) (overtone.live/at (clojure.core/+ time 750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 67)) (overtone.live/at (clojure.core/+ time 1250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 67)) (overtone.live/at (clojure.core/+ time 1750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 70)) (overtone.live/at (clojure.core/+ time 2250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 72)) (overtone.live/at (clojure.core/+ time 2750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 70)) (overtone.live/at (clojure.core/+ time 3250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 72)) (overtone.live/at (clojure.core/+ time 3750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 74)) (overtone.live/at (clojure.core/+ time 4250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 76)) (overtone.live/at (clojure.core/+ time 4750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 77)) (overtone.live/at (clojure.core/+ time 5250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 76)) (overtone.live/at (clojure.core/+ time 5750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 69)) (overtone.live/at (clojure.core/+ time 6250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 69)) (overtone.live/at (clojure.core/+ time 6750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 70)) (overtone.live/at (clojure.core/+ time 7250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 72)) (overtone.live/at (clojure.core/+ time 7750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 65)) (overtone.live/at (clojure.core/+ time 8250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 67)) (overtone.live/at (clojure.core/+ time 8750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 69)) (overtone.live/at (clojure.core/+ time 9250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 65)) (overtone.live/at (clojure.core/+ time 9750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 65)))
 user=> chords
 ({:note [53 57 60], :pos 1} {:note [55 59 62], :pos 5} {:note [60 64 67], :pos 9} {:note [60 64 67], :pos 13} {:note [57 61 64], :pos 25} {:note [53 57 60], :pos 31} {:note [57 61 64], :pos 35})
-user=> (def code-for-chords (play-piece chords 250 (fn [note] (piano note))))
+user=> (def code-for-chords (play-piece chords 250 (fn [chord] (doseq [note chord] (piano note)))))
 #'user/code-for-chords
 user=> code-for-chords
 (clojure.core/let [time (overtone.live/now)] (overtone.live/at (clojure.core/+ time 250) (#<user$eval19988$fn__19989 user$eval19988$fn__19989@711b461c> [53 57 60])) (overtone.live/at (clojure.core/+ time 1250) (#<user$eval19988$fn__19989 user$eval19988$fn__19989@711b461c> [55 59 62])) (overtone.live/at (clojure.core/+ time 2250) (#<user$eval19988$fn__19989 user$eval19988$fn__19989@711b461c> [60 64 67])) (overtone.live/at (clojure.core/+ time 3250) (#<user$eval19988$fn__19989 user$eval19988$fn__19989@711b461c> [60 64 67])) (overtone.live/at (clojure.core/+ time 6250) (#<user$eval19988$fn__19989 user$eval19988$fn__19989@711b461c> [57 61 64])) (overtone.live/at (clojure.core/+ time 7750) (#<user$eval19988$fn__19989 user$eval19988$fn__19989@711b461c> [53 57 60])) (overtone.live/at (clojure.core/+ time 8750) (#<user$eval19988$fn__19989 user$eval19988$fn__19989@711b461c> [57 61 64])))
@@ -750,5 +752,41 @@ user=> code-for-chords
 Did you see that? We just took the generated code and stored them in *variables*! Lisp, folks. More on the power of [Macros](http://c2.com/cgi/wiki?LispMacro) and [Metaprogramming](https://en.wikipedia.org/wiki/Metaprogramming).
 
 So now the variable `code-for-melody` contains the code that generates our melody, and `code-for-chords`, the code for the chords.
+
+##### Running our code with `eval`
+
+The notorious [eval](https://clojuredocs.org/clojure.core/eval) function takes *code* as a parameter and evaluates it. Lisp [introduced eval](https://en.wikipedia.org/wiki/Eval#Lisp) to the world.
+
+Let's listen to our melody and chords:
+
+```
+user=> (eval code-for-melody)
+#<synth-node[loading]: overtone.inst.piano/piano 94>
+user=> (eval code-for-chords)
+```
+
+But we don't want to listen to them separately, we want to listen to them together! So how do we do that?
+
+##### Parallel processing with `pmap`
+
+[pmap](https://clojuredocs.org/clojure.core/pmap) to the rescue!
+
+The map function takes a function that operates on single operands, and applies the function to a sequence of items. Let's say we have a list `(1 2 3 4 5)`, and we want to increment every number in the list to get `(2 3 4 5 6)`. We just have to map the function `inc` (increment by 1) to the sequence like so:
+
+```
+user=> (map + '(1 2 3 4 5))
+(2 3 4 5 6)
+```
+
+The [pmap](https://clojuredocs.org/clojure.core/pmap) function does a similar job, but instead of taking the function and sequentially applying it to every element in the list, it runs the function on the list elements *in parallel* or *at the same time, concurrently*.
+
+See where we're heading with this? We take `eval` and call it concurrently on our `code-for-melody` and `code-for-chords` using pmap!
+
+```
+user=> (pmap eval (list code-for-melody code-for-chords))
+(#<synth-node[loading]: overtone.inst.piano/piano 260> nil)
+```
+
+We just listened to our *musical piece*, together with rhythm, melody and harmony!
 
 *...work in progress...*
