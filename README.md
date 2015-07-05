@@ -820,4 +820,33 @@ user=> (generate-parallel-voices code-for-melody code-for-chords)
 
 We just listened to our *musical piece*, together with rhythm, melody and harmony!
 
+##### TL;DR Playback
+
+- We use the [play-piece](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L177) function that takes our musical piece (as a map), the duration of each beat, and the instrument function as parameters, and run it on our `musical-piece` and `chords`. `play-piece` uses the [macros](http://clojure.org/macros) [construct-piece](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L172) and [play-note](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L165) to generate *Overtone code* to play our music.
+
+```
+user=> musical-piece
+({:note 65, :pos 1} {:note 67, :pos 3} {:note 67, :pos 5} {:note 70, :pos 7} {:note 72, :pos 9} {:note 70, :pos 11} {:note 72, :pos 13} {:note 74, :pos 15} {:note 76, :pos 17} {:note 77, :pos 19} {:note 76, :pos 21} {:note 69, :pos 23} {:note 69, :pos 25} {:note 70, :pos 27} {:note 72, :pos 29} {:note 65, :pos 31} {:note 67, :pos 33} {:note 69, :pos 35} {:note 65, :pos 37} {:note 65, :pos 39})
+user=> (def code-for-melody (play-piece musical-piece 250 (fn [note] (piano note))))
+#'user/code-for-melody
+user=> code-for-melody
+(clojure.core/let [time (overtone.live/now)] (overtone.live/at (clojure.core/+ time 250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 65)) (overtone.live/at (clojure.core/+ time 750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 67)) (overtone.live/at (clojure.core/+ time 1250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 67)) (overtone.live/at (clojure.core/+ time 1750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 70)) (overtone.live/at (clojure.core/+ time 2250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 72)) (overtone.live/at (clojure.core/+ time 2750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 70)) (overtone.live/at (clojure.core/+ time 3250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 72)) (overtone.live/at (clojure.core/+ time 3750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 74)) (overtone.live/at (clojure.core/+ time 4250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 76)) (overtone.live/at (clojure.core/+ time 4750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 77)) (overtone.live/at (clojure.core/+ time 5250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 76)) (overtone.live/at (clojure.core/+ time 5750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 69)) (overtone.live/at (clojure.core/+ time 6250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 69)) (overtone.live/at (clojure.core/+ time 6750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 70)) (overtone.live/at (clojure.core/+ time 7250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 72)) (overtone.live/at (clojure.core/+ time 7750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 65)) (overtone.live/at (clojure.core/+ time 8250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 67)) (overtone.live/at (clojure.core/+ time 8750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 69)) (overtone.live/at (clojure.core/+ time 9250) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 65)) (overtone.live/at (clojure.core/+ time 9750) (#<user$eval19984$fn__19985 user$eval19984$fn__19985@49255fc0> 65)))
+user=> chords
+({:note [53 57 60], :pos 1} {:note [55 59 62], :pos 5} {:note [60 64 67], :pos 9} {:note [60 64 67], :pos 13} {:note [57 61 64], :pos 25} {:note [53 57 60], :pos 31} {:note [57 61 64], :pos 35})
+user=> (def code-for-chords (play-piece chords 250 (fn [chord] (doseq [note chord] (piano note)))))
+#'user/code-for-chords
+user=> code-for-chords
+(clojure.core/let [time (overtone.live/now)] (overtone.live/at (clojure.core/+ time 250) (#<user$eval19988$fn__19989 user$eval19988$fn__19989@711b461c> [53 57 60])) (overtone.live/at (clojure.core/+ time 1250) (#<user$eval19988$fn__19989 user$eval19988$fn__19989@711b461c> [55 59 62])) (overtone.live/at (clojure.core/+ time 2250) (#<user$eval19988$fn__19989 user$eval19988$fn__19989@711b461c> [60 64 67])) (overtone.live/at (clojure.core/+ time 3250) (#<user$eval19988$fn__19989 user$eval19988$fn__19989@711b461c> [60 64 67])) (overtone.live/at (clojure.core/+ time 6250) (#<user$eval19988$fn__19989 user$eval19988$fn__19989@711b461c> [57 61 64])) (overtone.live/at (clojure.core/+ time 7750) (#<user$eval19988$fn__19989 user$eval19988$fn__19989@711b461c> [53 57 60])) (overtone.live/at (clojure.core/+ time 8750) (#<user$eval19988$fn__19989 user$eval19988$fn__19989@711b461c> [57 61 64])))
+```
+
+- We then use the [generate-parallel-voices](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L186) function that acts as a wrapper to `pmap - eval`. It takes all generated code as arguments (for melody, chords, and whatever we may generate in the future), and plays them simultaneously:
+
+```
+user=> (generate-parallel-voices code-for-melody code-for-chords)
+(#< clojure.lang.PersistentList$1@4180ac0a> #<synth-node[loading]: overtone.inst.piano/piano 711> nil)
+```
+
+- We sit back and hear the music.
+
+
 *...work in progress...*
