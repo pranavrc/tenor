@@ -5,10 +5,10 @@
         [tenor.melody]
         [tenor.harmony]))
 
-(defn play-note [instrument note]
+(defn play-note-with-instrument [instrument note]
  (instrument note))
 
-(defn play-chord [instrument chord]
+(defn play-chord-with-instrument [instrument chord]
   (doseq [note chord]
     (play-note instrument note)))
 
