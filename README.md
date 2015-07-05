@@ -45,6 +45,8 @@ This ~~article~~ \**cough*\* essay will hopefully serve as a primer in music the
   - [Recording the music](#recording-the-music)
   - [TL;DR Playback](#tldr-playback)
 - [TL;DR in Code](#tldr-in-code)
+- [To Do](#to-do)
+- [Contributing](#contributing)
 
 ***
 
@@ -919,6 +921,30 @@ user=> (recording-stop)
 "./generated/songin11by4.wav"
 ```
 
+***
 
+### To Do
 
-*...work in progress...*
+- This is currently a fledgling project whose sense of melody stems from certain empirical ideas. Music theory is *huge*, and there are a lot more concepts we could incorporate, which will refine melody generation. For instance, the program could be taught to avoid [Tritone intervals](https://en.wikipedia.org/wiki/Tritone) or the *diabolus in musica*, a very dissonant interval that is usually avoided when composing a melody. There are hundreds of similar concepts that the program could be made aware of.
+
+- More procedures can be created in the [melody](https://github.com/pranavrc/tenor/blob/master/src/tenor/melody.clj) and [harmony](https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj) namespaces. We could write stateful procedures that take stock of what's been generated so far, before generating further.
+
+- Machine learning can be used to improvise songs based on specific emotions, moods and themes. Machine learning can also be used to learn from the listener about characteristics of songs that she/he likes and ones she/he hates.
+
+- Bass, percussion, and a lot of other layers and instruments can be added (Right now we're just at main melody and chords).
+
+- [Markov chains](https://en.wikipedia.org/wiki/Markov_chain) can be used to learn from existing music and compose songs accordingly. [David Cope](http://artsites.ucsc.edu/faculty/cope/experiments.htm)'s work is the one to look up to.
+
+- [Genetic algorithms](https://en.wikipedia.org/wiki/Evolutionary_music) and [Cellular automata](http://tones.wolfram.com/about/how.html) can be used to map generative and transformational algorithms into music.
+
+- [algorithmic.net](http://www.algorithmic.net/) contains over a thousand research resources on Computer generated music. Great study resource!
+
+- Probably a lot, lot more. Procedural music is a fascinatingly large world.
+
+***
+
+### Contributing
+
+Please feel free to contribute ideas, code, documentation, bug reports or just about anything else! This is a never-ending project that has infinite room for improvement, so there will probably never be a dearth of things to implement.
+
+***
