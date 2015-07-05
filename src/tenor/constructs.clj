@@ -162,23 +162,24 @@
 
 ;; --- Playback --- ;;
 
-(defmacro play-note [pivot-time position base-time player entity]
+(defmacro play-note [position base-time player entity]
   "Take time, instrument and note entity as arguments,
   and return overtone code that plays the note."
   `(list 'at
-         `(+ pivot-time ~(* ~position ~base-time))
+         `(+ ~(symbol "time") ~(* ~position ~base-time))
          (list ~player ~entity)))
 
-(defmacro construct-piece [entity-maps base-time player pivot-time]
+(defmacro construct-piece [entity-maps base-time player]
   "Take an entity map and run play-note on each
   note, creating a list of overtone playback code components."
-  `(map #(play-note pivot-time (:pos %) ~base-time ~player (:note %)) ~entity-maps))
+  `(map #(play-note (:pos %) ~base-time ~player (:note %)) ~entity-maps))
 
 (defn play-piece [entity-maps base-time player
                     & {:keys [pivot-time] :or {pivot-time (now)}}]
   "Play the constructed piece with current time as start time."
-  `(let [pivot-time (now)]
-     ~@(construct-piece entity-maps base-time player pivot-time)))
+  (let [pivot-time (symbol "time")]
+    `(let [~pivot-time (now)]
+       ~@(construct-piece entity-maps base-time player))))
 
 ;; --- Multiple voices --- ;;
 
