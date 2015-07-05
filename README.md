@@ -771,10 +771,10 @@ But we don't want to listen to them separately, we want to listen to them togeth
 
 [pmap](https://clojuredocs.org/clojure.core/pmap) to the rescue!
 
-The map function takes a function that operates on single operands, and applies the function to a sequence of items. Let's say we have a list `(1 2 3 4 5)`, and we want to increment every number in the list to get `(2 3 4 5 6)`. We just have to map the function `inc` (increment by 1) to the sequence like so:
+The [map](https://clojuredocs.org/clojure.core/map) function takes a function that operates on single operands, and applies the function to a sequence of items. Let's say we have a list `(1 2 3 4 5)`, and we want to increment every number in the list to get `(2 3 4 5 6)`. We just have to map the function `inc` (increment by 1) to the sequence:
 
 ```
-user=> (map + '(1 2 3 4 5))
+user=> (map inc '(1 2 3 4 5))
 (2 3 4 5 6)
 ```
 
