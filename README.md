@@ -36,9 +36,9 @@ This ~~article~~ \**cough*\* essay will hopefully serve as a primer in music the
 - [Harmony](#harmony)
   - [Chords and Arpeggios](#chords-and-arpeggios)
   - [*Chordifying* a musical piece](#chordifying-a-musical-piece)
-- [Macroland - Music as Code and Code as Music](#macroland-music-as-code-and-code-as-music)
+- [Macroland - Music as Code and Code as Music](#macroland---music-as-code-and-code-as-music)
   - [Playing notes in Overtone](#playing-notes-in-overtone)
-  - [Generating code for our musical piece](#generating-overtone-code-for-our-musical-piece)
+  - [Generating code for our musical piece](#generating-code-for-our-musical-piece)
 
 ***
 
@@ -710,7 +710,7 @@ Here's an example: `(at 1436066513081 (piano 67))`
 
 The `now` function returns the current epoch time, so now we have: `(at (now) (piano 67))`
 
-Say we had a short melody of one measure `({:note 67, :pos 1} {:note 65, :pos 2} {:note 67, :pos 3} {:note 65, :pos 3})` with a beat-length of 250 milliseconds (4 beats, 1 second total). Let's play this measure with Overtone:
+Say we had a short melody of one measure `({:note 67, :pos 1} {:note 65, :pos 2} {:note 67, :pos 3} {:note 65, :pos 4})` with a beat-length of 250 milliseconds (4 beats, 1 second total). Let's play this measure with Overtone:
 
 ```
 user=> (let [time (now)]
@@ -721,5 +721,12 @@ user=> (let [time (now)]
 ```
 
 ##### Generating code for our musical piece
+
+The [play-piece](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L177) function takes our musical piece (as a map), the duration of each beat, and the instrument function as parameters. It generates Overtone code to play the music. Let's try this first with our small one-measure melody:
+
+```
+user=> (play-piece '({:note 67, :pos 1} {:note 65, :pos 2} {:note 67, :pos 3} {:note 65, :pos 4}) 250 (fn [note] (piano note)))
+(clojure.core/let [time (overtone.live/now)] (overtone.live/at (clojure.core/+ time 250) (#<user$eval19948$fn__19949 user$eval19948$fn__19949@4c68278f> 67)) (overtone.live/at (clojure.core/+ time 500) (#<user$eval19948$fn__19949 user$eval19948$fn__19949@4c68278f> 65)) (overtone.live/at (clojure.core/+ time 750) (#<user$eval19948$fn__19949 user$eval19948$fn__19949@4c68278f> 67)) (overtone.live/at (clojure.core/+ time 1000) (#<user$eval19948$fn__19949 user$eval19948$fn__19949@4c68278f> 65)))
+```
 
 *...work in progress...*
