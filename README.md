@@ -673,7 +673,7 @@ There are numerous other ways of constructing chords (augmented, diminished, sus
 
 Using `generate-entity-map`, we built a map of `{:note note, :pos beat}` pairs and generated a musical piece with just rhythm and melody. Time to *harmonize* it.
 
-The [harmony](https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj) namespace contains procedures that construct chords from notes. For instance, the [major-chords-octave-down](https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj#L21) function takes a beat position and a note, constructs the major chord of the note shifted down by one octave (Example, F3 major chord if the note is F4), and returns a hash-map `{:pos beat :note major-chord-of-note-shifted-one-octave-down}` of that note.
+The [harmony](https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj) namespace contains procedures that construct chords from notes. For instance, the [major-chords-octave-down](https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj#L30) function takes a beat position and a note, constructs the major chord of the note shifted down by one octave (Example, F3 major chord if the note is F4), and returns a hash-map `{:pos beat :note major-chord-of-note-shifted-one-octave-down}` of that note.
 
 The [chordify](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L156) higher-order function takes the map of our musical piece, and a *procedure* or fundamental method to build a chord out of a note (just like our `generate-intervals` function took `conjunct-motion` or `disjunct-motion` as parameters, remember?). It then takes our musical piece, picks out a few notes randomly, and generates a new musical piece with chords instead of notes at the same positions.
 
@@ -700,7 +700,7 @@ And there we go! Our 20-beat musical piece in 4/4 is now complete!
 
 ##### TL;DR Harmony
 
-- The [harmony](https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj) namespace contains procedures that construct chords from notes. For instance, the [major-chords-octave-down](https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj#L21) function takes a beat position and a note, constructs the major chord of the note shifted down by one octave (Example, F3 major chord if the note is F4), and returns a hash-map `{:pos beat :note major-chord-of-note-shifted-one-octave-down}` of that note.
+- The [harmony](https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj) namespace contains procedures that construct chords from notes. For instance, the [major-chords-octave-down](https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj#L30) function takes a beat position and a note, constructs the major chord of the note shifted down by one octave (Example, F3 major chord if the note is F4), and returns a hash-map `{:pos beat :note major-chord-of-note-shifted-one-octave-down}` of that note.
 
 ```
 user=> (major-chords-octave-down 1 67)
