@@ -718,6 +718,7 @@ user=> (let [time (now)]
          (at (+ (* 250 2) time) (piano 65))
          (at (+ (* 250 3) time) (piano 67))
          (at (+ (* 250 4) time) (piano 65)))
+#<synth-node[loading]: overtone.inst.piano/piano 74>
 ```
 
 ##### Generating code for our musical piece
