@@ -20,6 +20,7 @@ This ~~article~~ \**cough*\* essay will hopefully serve as a primer in music the
   - [Meters](#meters)
   - [Generating a measure in 11/4](#generating-a-measure-in-114)
   - [Sparseness of a measure](#sparseness-of-a-measure)
+  - [Stringing measures together](#stringing-measures-together)
   - [TL;DR Rhythm](#tldr-rhythm)
 - [Melody](#melody)
   - [Notes](#notes)
@@ -255,6 +256,26 @@ user=> (segment-measure meter-11 :note-value 4 :sparseness 100)
 
 Voila, we have the *ones* from the meter! The other sixteenth-beats were never filled, they all ended up as rests.
 
+##### Stringing measures together
+
+The [string-measures](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L78) function takes a list of measures and the beat count of each measure, and strings them together. If `[1 3 4]` and `[1 2 4]` were the measures to be strung together, the result would be `[1 3 4 5 6 8]`.
+
+```
+user=> (string-measures '((1 3 4) (1 2 4)) 4)
+(1 3 4 5 6 8)
+```
+
+The [generate-rhythm](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L132) function takes the measure count and beat count of each measure, and optionally the minimum note value (sixteen being the default) and sparseness (1 default), and generates the respective number of measures, each of the specified number of beats. For instance, this generates 10 measures, each of 4/4 time signature:
+
+```
+user=> (def rhythm (generate-rhythm 10 4))
+#'user/rhythm
+user=> rhythm
+(1 3 5 7 9 11 13 15 17 19 21 23 25 27 29 31 33 35 37 39)
+user=> (count rhythm)
+20
+```
+
 ##### TL;DR Rhythm
 
 - We construct a random *meter* for a single measure of a specific time signature using the `generate-meter` function. Say, `(1 4 3 3)` for a 11/4 measure (11 quarter-beats, counted `one - one-two-three-four - one-two-three - one-two-three`).
@@ -277,6 +298,17 @@ user=> (segment-measure meter-11 :note-value 4 :sparseness 2)
 (1 2 4 5 8 10 13 15 21 23 27 29 30 33 35 41 42 44)
 user=> (segment-measure meter-11 :note-value 4 :sparseness 100)
 (1 5 21 33)
+```
+
+- We use the [generate-rhythm](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L132) function to create a rhythm of multiple measures. It takes the measure count and beat count of each measure, and optionally the minimum note value (sixteen being the default) and sparseness (1 default), and generates the respective number of measures, each of the specified number of beats.
+
+```
+user=> (def rhythm (generate-rhythm 10 4))
+#'user/rhythm
+user=> rhythm
+(1 3 5 7 9 11 13 15 17 19 21 23 25 27 29 31 33 35 37 39)
+user=> (count rhythm)
+20
 ```
 
 ***
@@ -564,7 +596,7 @@ user=> (map find-note-name (intervals->notes disjunct-20 f-major))
 
 So far, we've been able to generate a rhythmic measure of a particular time signature, and a rhythm-agnostic melody with notes and melodic motion. Combining these together is pretty straight-forward.
 
-The [generate-rhythm](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L132) function takes the measure count and beat count of each measure, and optionally the minimum note value (sixteen being the default) and sparseness (1 default), and generates the respective number of measures, each of the specified number of beats. For instance, this generates 10 measures, each of 4/4 time signature:
+We used the [generate-rhythm](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L132) function to generate a 20-beat rhythm in 4/4 time signature earlier:
 
 ```
 user=> (def rhythm (generate-rhythm 10 4))
