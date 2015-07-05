@@ -44,6 +44,7 @@ This ~~article~~ \**cough*\* essay will hopefully serve as a primer in music the
   - [Parallel processing with `pmap`](#parallel-processing-with-pmap)
   - [Recording the music](#recording-the-music)
   - [TL;DR Playback](#tldr-playback)
+- [TL;DR in Code](#tldr-in-code)
 
 ***
 
@@ -874,6 +875,50 @@ user=> (recording-stop)
 ```
 
 - We sit back and listen to the music.
+
+***
+
+### TL;DR in Code
+
+The project is written with Clojure, so there needs be a system installation of [leiningen](http://leiningen.org/#install) and [clojure](http://clojure.org/downloads), before we're able to run the project.
+
+Setting up the project and entering the REPL:
+
+```
+user@localhost ~ $ git clone git@github.com:pranavrc/tenor.git
+user@localhost ~ $ cd tenor/
+user@localhost ~ $ lein deps
+user@localhost tenor $ lein repl
+```
+
+Inside the REPL:
+
+```
+user=> (use 'tenor.core 'tenor.constructs 'tenor.melody 'tenor.harmony 'overtone.inst.piano 'overtone.live :reload)
+user=> (def musical-piece (generate-entity-map conjunct-motion 5 11))
+#'user/musical-piece
+user=> musical-piece
+({:note 78, :pos 1} {:note 78, :pos 2} {:note 80, :pos 3} {:note 81, :pos 4} {:note 81, :pos 5} {:note 80, :pos 6} {:note 90, :pos 8} {:note 88, :pos 9} {:note 86, :pos 10} {:note 88, :pos 12} {:note 90, :pos 13} {:note 88, :pos 14} {:note 86, :pos 15} {:note 88, :pos 16} {:note 86, :pos 17} {:note 88, :pos 19} {:note 81, :pos 20} {:note 83, :pos 21} {:note 78, :pos 23} {:note 78, :pos 24} {:note 86, :pos 25} {:note 88, :pos 26} {:note 86, :pos 27} {:note 78, :pos 28} {:note 80, :pos 30} {:note 85, :pos 31} {:note 86, :pos 32} {:note 88, :pos 34} {:note 90, :pos 35} {:note 78, :pos 36} {:note 80, :pos 37} {:note 78, :pos 38} {:note 80, :pos 39} {:note 81, :pos 41} {:note 80, :pos 42} {:note 78, :pos 43} {:note 80, :pos 45} {:note 78, :pos 46} {:note 80, :pos 47} {:note 78, :pos 48} {:note 78, :pos 49} {:note 80, :pos 50} {:note 78, :pos 52} {:note 88, :pos 53} {:note 90, :pos 54})
+user=> (def chords (chordify musical-piece major-chords-octave-down))
+#'user/chords
+user=> chords
+({:note [68 72 75], :pos 3} {:note [69 73 76], :pos 4} {:note [69 73 76], :pos 5} {:note [78 82 85], :pos 8} {:note [76 80 83], :pos 9} {:note [69 73 76], :pos 20} {:note [66 70 73], :pos 23} {:note [66 70 73], :pos 24} {:note [74 78 81], :pos 25} {:note [66 70 73], :pos 28} {:note [73 77 80], :pos 31} {:note [66 70 73], :pos 36} {:note [68 72 75], :pos 47} {:note [66 70 73], :pos 52} {:note [78 82 85], :pos 54})
+user=> (def code-for-melody (play-piece musical-piece 250 (fn [note] (piano note))))
+#'user/code-for-melody
+user=> code-for-melody
+(clojure.core/let [time (overtone.live/now)] (overtone.live/at (clojure.core/+ time 250) (#<user$fn__10489 user$fn__10489@71fce2e7> 78)) (overtone.live/at (clojure.core/+ time 500) (#<user$fn__10489 user$fn__10489@71fce2e7> 78)) (overtone.live/at (clojure.core/+ time 750) (#<user$fn__10489 user$fn__10489@71fce2e7> 80)) (overtone.live/at (clojure.core/+ time 1000) (#<user$fn__10489 user$fn__10489@71fce2e7> 81)) (overtone.live/at (clojure.core/+ time 1250) (#<user$fn__10489 user$fn__10489@71fce2e7> 81)) (overtone.live/at (clojure.core/+ time 1500) (#<user$fn__10489 user$fn__10489@71fce2e7> 80)) (overtone.live/at (clojure.core/+ time 2000) (#<user$fn__10489 user$fn__10489@71fce2e7> 90)) (overtone.live/at (clojure.core/+ time 2250) (#<user$fn__10489 user$fn__10489@71fce2e7> 88)) (overtone.live/at (clojure.core/+ time 2500) (#<user$fn__10489 user$fn__10489@71fce2e7> 86)) (overtone.live/at (clojure.core/+ time 3000) (#<user$fn__10489 user$fn__10489@71fce2e7> 88)) (overtone.live/at (clojure.core/+ time 3250) (#<user$fn__10489 user$fn__10489@71fce2e7> 90)) (overtone.live/at (clojure.core/+ time 3500) (#<user$fn__10489 user$fn__10489@71fce2e7> 88)) (overtone.live/at (clojure.core/+ time 3750) (#<user$fn__10489 user$fn__10489@71fce2e7> 86)) (overtone.live/at (clojure.core/+ time 4000) (#<user$fn__10489 user$fn__10489@71fce2e7> 88)) (overtone.live/at (clojure.core/+ time 4250) (#<user$fn__10489 user$fn__10489@71fce2e7> 86)) (overtone.live/at (clojure.core/+ time 4750) (#<user$fn__10489 user$fn__10489@71fce2e7> 88)) (overtone.live/at (clojure.core/+ time 5000) (#<user$fn__10489 user$fn__10489@71fce2e7> 81)) (overtone.live/at (clojure.core/+ time 5250) (#<user$fn__10489 user$fn__10489@71fce2e7> 83)) (overtone.live/at (clojure.core/+ time 5750) (#<user$fn__10489 user$fn__10489@71fce2e7> 78)) (overtone.live/at (clojure.core/+ time 6000) (#<user$fn__10489 user$fn__10489@71fce2e7> 78)) (overtone.live/at (clojure.core/+ time 6250) (#<user$fn__10489 user$fn__10489@71fce2e7> 86)) (overtone.live/at (clojure.core/+ time 6500) (#<user$fn__10489 user$fn__10489@71fce2e7> 88)) (overtone.live/at (clojure.core/+ time 6750) (#<user$fn__10489 user$fn__10489@71fce2e7> 86)) (overtone.live/at (clojure.core/+ time 7000) (#<user$fn__10489 user$fn__10489@71fce2e7> 78)) (overtone.live/at (clojure.core/+ time 7500) (#<user$fn__10489 user$fn__10489@71fce2e7> 80)) (overtone.live/at (clojure.core/+ time 7750) (#<user$fn__10489 user$fn__10489@71fce2e7> 85)) (overtone.live/at (clojure.core/+ time 8000) (#<user$fn__10489 user$fn__10489@71fce2e7> 86)) (overtone.live/at (clojure.core/+ time 8500) (#<user$fn__10489 user$fn__10489@71fce2e7> 88)) (overtone.live/at (clojure.core/+ time 8750) (#<user$fn__10489 user$fn__10489@71fce2e7> 90)) (overtone.live/at (clojure.core/+ time 9000) (#<user$fn__10489 user$fn__10489@71fce2e7> 78)) (overtone.live/at (clojure.core/+ time 9250) (#<user$fn__10489 user$fn__10489@71fce2e7> 80)) (overtone.live/at (clojure.core/+ time 9500) (#<user$fn__10489 user$fn__10489@71fce2e7> 78)) (overtone.live/at (clojure.core/+ time 9750) (#<user$fn__10489 user$fn__10489@71fce2e7> 80)) (overtone.live/at (clojure.core/+ time 10250) (#<user$fn__10489 user$fn__10489@71fce2e7> 81)) (overtone.live/at (clojure.core/+ time 10500) (#<user$fn__10489 user$fn__10489@71fce2e7> 80)) (overtone.live/at (clojure.core/+ time 10750) (#<user$fn__10489 user$fn__10489@71fce2e7> 78)) (overtone.live/at (clojure.core/+ time 11250) (#<user$fn__10489 user$fn__10489@71fce2e7> 80)) (overtone.live/at (clojure.core/+ time 11500) (#<user$fn__10489 user$fn__10489@71fce2e7> 78)) (overtone.live/at (clojure.core/+ time 11750) (#<user$fn__10489 user$fn__10489@71fce2e7> 80)) (overtone.live/at (clojure.core/+ time 12000) (#<user$fn__10489 user$fn__10489@71fce2e7> 78)) (overtone.live/at (clojure.core/+ time 12250) (#<user$fn__10489 user$fn__10489@71fce2e7> 78)) (overtone.live/at (clojure.core/+ time 12500) (#<user$fn__10489 user$fn__10489@71fce2e7> 80)) (overtone.live/at (clojure.core/+ time 13000) (#<user$fn__10489 user$fn__10489@71fce2e7> 78)) (overtone.live/at (clojure.core/+ time 13250) (#<user$fn__10489 user$fn__10489@71fce2e7> 88)) (overtone.live/at (clojure.core/+ time 13500) (#<user$fn__10489 user$fn__10489@71fce2e7> 90)))
+user=> (def code-for-chords (play-piece chords 250 (fn [chord] (doseq [note chord] (piano note)))))
+#'user/code-for-chords
+user=> code-for-chords
+(clojure.core/let [time (overtone.live/now)] (overtone.live/at (clojure.core/+ time 750) (#<user$fn__10491 user$fn__10491@5e8cd00a> [68 72 75])) (overtone.live/at (clojure.core/+ time 1000) (#<user$fn__10491 user$fn__10491@5e8cd00a> [69 73 76])) (overtone.live/at (clojure.core/+ time 1250) (#<user$fn__10491 user$fn__10491@5e8cd00a> [69 73 76])) (overtone.live/at (clojure.core/+ time 2000) (#<user$fn__10491 user$fn__10491@5e8cd00a> [78 82 85])) (overtone.live/at (clojure.core/+ time 2250) (#<user$fn__10491 user$fn__10491@5e8cd00a> [76 80 83])) (overtone.live/at (clojure.core/+ time 5000) (#<user$fn__10491 user$fn__10491@5e8cd00a> [69 73 76])) (overtone.live/at (clojure.core/+ time 5750) (#<user$fn__10491 user$fn__10491@5e8cd00a> [66 70 73])) (overtone.live/at (clojure.core/+ time 6000) (#<user$fn__10491 user$fn__10491@5e8cd00a> [66 70 73])) (overtone.live/at (clojure.core/+ time 6250) (#<user$fn__10491 user$fn__10491@5e8cd00a> [74 78 81])) (overtone.live/at (clojure.core/+ time 7000) (#<user$fn__10491 user$fn__10491@5e8cd00a> [66 70 73])) (overtone.live/at (clojure.core/+ time 7750) (#<user$fn__10491 user$fn__10491@5e8cd00a> [73 77 80])) (overtone.live/at (clojure.core/+ time 9000) (#<user$fn__10491 user$fn__10491@5e8cd00a> [66 70 73])) (overtone.live/at (clojure.core/+ time 11750) (#<user$fn__10491 user$fn__10491@5e8cd00a> [68 72 75])) (overtone.live/at (clojure.core/+ time 13000) (#<user$fn__10491 user$fn__10491@5e8cd00a> [66 70 73])) (overtone.live/at (clojure.core/+ time 13500) (#<user$fn__10491 user$fn__10491@5e8cd00a> [78 82 85])))
+user=> (recording-start "./generated/songin11by4.wav")
+:recording-started
+user=> (generate-parallel-voices code-for-melody code-for-chords)
+(#< clojure.lang.PersistentList$1@22fc7015> #<synth-node[loading]: overtone.inst.piano/piano 396> nil)
+user=> (recording-stop)
+"./generated/songin11by4.wav"
+```
+
 
 
 *...work in progress...*
