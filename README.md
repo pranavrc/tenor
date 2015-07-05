@@ -36,11 +36,13 @@ This ~~article~~ \**cough*\* essay will hopefully serve as a primer in music the
 - [Harmony](#harmony)
   - [Chords and Arpeggios](#chords-and-arpeggios)
   - [*Chordifying* a musical piece](#chordifying-a-musical-piece)
+  - [TL;DR Harmony](#tldr-harmony)
 - [Macroland - Music as Code and Code as Music](#macroland---music-as-code-and-code-as-music)
   - [Playing notes in Overtone](#playing-notes-in-overtone)
   - [Generating code for our musical piece](#generating-code-for-our-musical-piece)
   - [Running our code with `eval`](#running-our-code-with-eval)
   - [Parallel processing with `pmap`](#parallel-processing-with-pmap)
+  - [TL;DR Playback](#tldr-playback)
 
 ***
 
@@ -671,7 +673,7 @@ There are numerous other ways of constructing chords (augmented, diminished, sus
 
 Using `generate-entity-map`, we built a map of `{:note note, :pos beat}` pairs and generated a musical piece with just rhythm and melody. Time to *harmonize* it.
 
-The [harmony](https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj) namespace contains procedures that construct chords from notes. For instance, the [major-chords-octave-down](https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj#L21) function takes a note, constructs the major chord of the note shifted down by one octave (Example, F3 major chord if the note is F4), and returns a hash-map `{:pos beat :note major-chord-of-note-shifted-one-octave-down}` of that note.
+The [harmony](https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj) namespace contains procedures that construct chords from notes. For instance, the [major-chords-octave-down](https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj#L21) function takes a beat position and a note, constructs the major chord of the note shifted down by one octave (Example, F3 major chord if the note is F4), and returns a hash-map `{:pos beat :note major-chord-of-note-shifted-one-octave-down}` of that note.
 
 The [chordify](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L156) higher-order function takes the map of our musical piece, and a *procedure* or fundamental method to build a chord out of a note (just like our `generate-intervals` function took `conjunct-motion` or `disjunct-motion` as parameters, remember?). It then takes our musical piece, picks out a few notes randomly, and generates a new musical piece with chords instead of notes at the same positions.
 
@@ -695,6 +697,28 @@ Now that we have the chords, let's lay out our 20-beat musical piece again:
 ```
 
 And there we go! Our 20-beat musical piece in 4/4 is now complete!
+
+##### TL;DR Harmony
+
+- The [harmony](https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj) namespace contains procedures that construct chords from notes. For instance, the [major-chords-octave-down](https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj#L21) function takes a beat position and a note, constructs the major chord of the note shifted down by one octave (Example, F3 major chord if the note is F4), and returns a hash-map `{:pos beat :note major-chord-of-note-shifted-one-octave-down}` of that note.
+
+```
+user=> (major-chords-octave-down 1 67)
+{:note [55 59 62], :pos 1}
+```
+
+- We use the [chordify](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L156) higher-order function that takes the map of our musical piece, and a *procedure* or fundamental method to build a chord out of a note. It picks out random notes from our piece to *chordify*, and generates a new musical piece with chords instead of notes at the same positions.
+
+```
+user=> musical-piece
+({:note 65, :pos 1} {:note 67, :pos 3} {:note 67, :pos 5} {:note 70, :pos 7} {:note 72, :pos 9} {:note 70, :pos 11} {:note 72, :pos 13} {:note 74, :pos 15} {:note 76, :pos 17} {:note 77, :pos 19} {:note 76, :pos 21} {:note 69, :pos 23} {:note 69, :pos 25} {:note 70, :pos 27} {:note 72, :pos 29} {:note 65, :pos 31} {:note 67, :pos 33} {:note 69, :pos 35} {:note 65, :pos 37} {:note 65, :pos 39})
+user=> (def chords (chordify musical-piece major-chords-octave-down))
+#'user/chords
+user=> chords
+({:note [53 57 60], :pos 1} {:note [55 59 62], :pos 5} {:note [60 64 67], :pos 9} {:note [60 64 67], :pos 13} {:note [57 61 64], :pos 25} {:note [53 57 60], :pos 31} {:note [57 61 64], :pos 35})
+```
+
+- With this we have `musical-piece` (melody with rhythm) and `chords` (harmony with rhythm), all that we need to start generating music.
 
 ***
 
