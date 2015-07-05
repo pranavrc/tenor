@@ -2,7 +2,7 @@
 
 The concept of music is incredibly accommodating; anything from industrial noise to baroque classical can be appreciated with enough interest. This makes the problem statement simple - all we need is a random rhythm and melody generator and we could pass off its output as music.
 
-But popular and contemporary music has tuned the ears of the average listener to certain preset patterns in melody, harmony and rhythm. As a result, most of us have developed a collective sense of what makes good music and what doesn't, while in fact, there is no such thing as good or bad music (objectively, of course). Now this makes the problem statement a lot more tangible - generating music is easy, generating music that *sounds good to the human ear* requires more effort.
+But popular and contemporary music has tuned the ears of the average listener to certain preset patterns in melody, harmony and rhythm. As a result, most of us have developed a collective sense of what makes good music and what doesn't, while in fact, there is no such thing as good or bad music (objectively, of course). Now this makes the problem statement a lot more tangible - generating music is easy, generating music that sounds *accessible* or *good to the human ear* requires more effort.
 
 The project is an attempt at constructing primitive music theory and using it as a base to build procedures that can generate melodies, in-tune to the ears of the average listener. Most of the heavy lifting is done by [Clojure](http://clojure.org/) and [Overtone](http://overtone.github.io/); we just build simple abstractions to represent concepts and patterns in music theory and use them to generate musical pieces.
 
@@ -927,7 +927,7 @@ user=> (recording-stop)
 
 - This is currently a fledgling project whose sense of melody stems from certain empirical ideas. Music theory is *huge*, and there are a lot more concepts we could incorporate, which will refine melody generation. For instance, the program could be taught to avoid [Tritone intervals](https://en.wikipedia.org/wiki/Tritone) or the *diabolus in musica*, a very dissonant interval that is usually avoided when composing a melody. There are hundreds of similar concepts that the program could be made aware of.
 
-- More procedures can be created in the [melody](https://github.com/pranavrc/tenor/blob/master/src/tenor/melody.clj) and [harmony](https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj) namespaces. We could write stateful procedures that take stock of what's been generated so far, before generating further.
+- More procedures can be created in the [melody](https://github.com/pranavrc/tenor/blob/master/src/tenor/melody.clj) and [harmony](https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj) namespaces. We could write stateful procedures that take stock of what's been generated so far, before generating further. For instance, *crouching before leaping* - if the melody has been ascending in steps for a while and an up-leap is generated, a little down-step before the up-leap adds a tad more *drama* to the leap, making it sound richer. To do this, the procedure will have to know the contour of the melody generated so far.
 
 - Machine learning can be used to improvise songs based on specific emotions, moods and themes. Machine learning can also be used to learn from the listener about characteristics of songs that she/he likes and ones she/he hates.
 
