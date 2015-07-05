@@ -724,7 +724,7 @@ user=> chords
 
 ### Macroland - Music as Code and Code as Music
 
-*All work and no play makes Jack a dull chap - Van Morrison*
+*"All work and no play makes Jack a dull chap" - Van Morrison, Down the Road, 2002.*
 
 Now that we have the maps for both melody and chords in hand, we can now play them! We're gonna write some new code ~~that generates music~~ that generates *code* that generates music.
 
@@ -804,7 +804,7 @@ user=> (map inc '(1 2 3 4 5))
 
 The [pmap](https://clojuredocs.org/clojure.core/pmap) function does a similar job, but instead of taking the function and sequentially applying it to every element in the list, it runs the function on the list elements *in parallel* or *at the same time, concurrently*.
 
-See where we're heading with this? We take `eval` and call it concurrently on our `code-for-melody` and `code-for-chords` using pmap!
+See where we're heading with this? We take `eval` and call it concurrently on our `code-for-melody` and `code-for-chords` using pmap! Think of it as two different guitarists, one playing the main melody and the other playing the chords simultaneously. Except, in our case, `eval` is both the guitarists at once.
 
 ```
 user=> (pmap eval (list code-for-melody code-for-chords))
