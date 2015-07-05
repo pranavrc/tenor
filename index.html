@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Tenor - Generating accessible music with Clojure and Overtone.</title>
+<meta charset='utf-8'>
+<link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+<a href="https://github.com/pranavrc/tenor"><img style="position:absolute;top:0;right:0;border:0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on Github"></a>
+<h2 id="tenor">Generating accessible music with Clojure and Overtone (and a primer in Music theory)</h2>
+
+<audio controls>
+    <source src="./generated/b4minor.wav" type="audio/wav">
+    Your browser does not support the audio element.
+</audio>
+
+<p>The concept of music is incredibly accommodating; anything from industrial noise to baroque classical can be appreciated with enough interest. This makes the problem statement simple - all we need is a random rhythm and melody generator and we could pass off its output as music.</p>
+
+<p>But popular and contemporary music has tuned the ears of the average listener to certain preset patterns in melody, harmony and rhythm. As a result, most of us have developed a collective sense of what makes good music and what doesn’t, while in fact, there is no such thing as good or bad music (objectively, of course). Now this makes the problem statement a lot more tangible - generating music is easy, generating music that sounds <em>accessible</em> or <em>good to the human ear</em> requires more effort.</p>
+
+<p>The project is an attempt at constructing primitive music theory and using it as a base to build procedures that can generate melodies, in-tune to the ears of the average listener. Most of the heavy lifting is done by <a href="http://clojure.org/">Clojure</a> and <a href="http://overtone.github.io/">Overtone</a>; we just build simple abstractions to represent concepts and patterns in music theory and use them to generate musical pieces.</p>
+
+<p>This <del>article</del> <em>*cough*</em> essay will hopefully serve as a primer in music theory whilst also describing its construction, and consequently the generation of music, in Clojure.</p>
+
+<audio controls>
+    <source src="./generated/g3diatonic.wav" type="audio/wav">
+    Your browser does not support the audio element.
+</audio>
+
+<hr>
+
+<h2 id="contents">Contents</h2>
+
+<ul>
+<li><a href="#music-to-the-human-ears">Music to the human ears</a></li>
+<li><a href="#rhythm">Rhythm</a> <br>
+<ul><li><a href="#time-signature">Time Signature</a></li>
+<li><a href="#popular-songs-in-non-44-signature">Popular songs in non-4/4 signature</a></li>
+<li><a href="#representing-measures">Representing measures</a></li>
+<li><a href="#meters">Meters</a></li>
+<li><a href="#generating-a-measure-in-114">Generating a measure in 11/4</a></li>
+<li><a href="#sparseness-of-a-measure">Sparseness of a measure</a></li>
+<li><a href="#stringing-measures-together">Stringing measures together</a></li>
+<li><a href="#tldr-rhythm">TL;DR Rhythm</a></li></ul></li>
+<li><a href="#melody">Melody</a> <br>
+<ul><li><a href="#notes">Notes</a></li>
+<li><a href="#octaves">Octaves</a></li>
+<li><a href="#semitones-and-whole-tones">Semitones and Whole tones</a></li>
+<li><a href="#scales">Scales</a></li>
+<li><a href="#intervals---unison-steps-and-leaps">Intervals - unison, steps and leaps</a></li>
+<li><a href="#melodic-motion---conjunct-and-disjunct">Melodic motion - conjunct and disjunct</a></li>
+<li><a href="#weighted-random-interval-jumps">Weighted random interval jumps</a></li>
+<li><a href="#simulating-melodic-motion">Simulating melodic motion</a></li>
+<li><a href="#tldr-melody">TL;DR Melody</a></li></ul></li>
+<li><a href="#combining-melody-with-rhythm">Combining Melody with Rhythm</a></li>
+<li><a href="#harmony">Harmony</a> <br>
+<ul><li><a href="#chords-and-arpeggios">Chords and Arpeggios</a></li>
+<li><a href="#chordifying-a-musical-piece"><em>Chordifying</em> a musical piece</a></li>
+<li><a href="#tldr-harmony">TL;DR Harmony</a></li></ul></li>
+<li><a href="#macroland---music-as-code-and-code-as-music">Macroland - Music as Code and Code as Music</a> <br>
+<ul><li><a href="#playing-notes-in-overtone">Playing notes in Overtone</a></li>
+<li><a href="#generating-code-for-our-musical-piece">Generating code for our musical piece</a></li>
+<li><a href="#running-our-code-with-eval">Running our code with <code>eval</code></a></li>
+<li><a href="#parallel-processing-with-pmap">Parallel processing with <code>pmap</code></a></li>
+<li><a href="#recording-the-music">Recording the music</a></li>
+<li><a href="#tldr-playback">TL;DR Playback</a></li></ul></li>
+<li><a href="#tldr-in-code">TL;DR in Code</a></li>
+<li><a href="#to-do">To Do</a></li>
+<li><a href="#contributing">Contributing</a></li>
+</ul>
+
+<hr>
+
+
+
+<h3 id="music-to-the-human-ears">Music to the human ears</h3>
+
+<p>Most pieces in contemporary music share certain common characteristics in rhythm, harmony and melody. There’s a high chance that one or more of these characteristics occur in a song that we happen to discover, and since we’re attuned to these patterns already, the melody then becomes instantly identifiable without sounding like random noise.</p>
+
+<p>Some of these idiosyncrasies could be:</p>
+
+<ul>
+<li>The famed <a href="https://en.wikipedia.org/wiki/Time_signature#Most_frequent_time_signatures">4/4 time signature</a>.</li>
+<li>The <a href="https://en.wikipedia.org/wiki/Call_and_response_%28music%29#Popular_music">call-and-response</a> pattern.</li>
+<li>Phil Specter’s <a href="https://en.wikipedia.org/wiki/Wall_of_Sound">Wall of Sound</a>.</li>
+<li>The <a href="https://en.wikipedia.org/wiki/C_major">C-major scale</a>.</li>
+<li>Variations of the C-D-G-C chord pattern or other common chord patterns.</li>
+</ul>
+
+<p>Here’s a <a href="http://www.hooktheory.com/blog/i-analyzed-the-chords-of-1300-popular-songs-for-patterns-this-is-what-i-found/">very interesting analysis</a> on common patterns found in over 1300 popular songs. One way of generating listenable music would be to create procedures that conform to some of these (though not exactly these) norms.</p>
+
+<hr>
+
+
+
+<h3 id="rhythm">Rhythm</h3>
+
+<p>Rhythm is, perhaps, the most accessible and instantly decipherable component of a song because it lays out the fundamental structure over which melody and harmony interplay. A single rhythmic theme (say, the 4/4) also repeats fairly often in a song, so each individual measure in a musical piece need not be procedurally generated.</p>
+
+
+
+<h5 id="time-signature">Time Signature</h5>
+
+<p>A <a href="https://en.wikipedia.org/wiki/Time_signature">time signature</a> governs how many beats (or foot-taps) there are in a measure, and the duration of each beat. A signature in 4/4 simply means that we repeatedly tap 4 times in quarter-note (1/4 - its length depends on the length of the full note) intervals. Here, each tap is a beat and 4 taps make a measure (the repeating basic pattern of the song). Here’s how we’d tap our feet to <em>Comfortably Numb</em> by Pink Floyd (a popular 4/4 song), for instance:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs mathematica">Hello Hel - lo Hello - (<span class="hljs-keyword">Rest</span>) Is there - anybody 
+Tap       - Tap      - Tap             - Tap
+
+<span class="hljs-keyword">In</span> there? - (<span class="hljs-keyword">Rest</span>) - (<span class="hljs-keyword">Rest</span>) Just - nod
+Tap       - Tap    - Tap         - Tap</code></pre>
+
+<p>Let’s take the first beat (‘Hello Hel’), and decompose the quarter note (1/4) into sixteenth notes (1/16), which means we’re gonna split the beat further into four other beats. Now, if we tap to <em>these</em> beats (we’d have to tap really fast), the quarter beat will look like this.</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs applescript">Hel - lo  - (<span class="hljs-property">rest</span>)  - Hel
+Tap - Tap - Tap     - Tap</code></pre>
+
+<p>This tells us that in a measure decomposed into sixteenth beats (assuming we do not cross over into 1/32 and further), notes and rests are, to an extent, randomly interspersed. To reaffirm this, we can look at <em>Smoke on the Water</em> by Deep Purple (another popular 4/4 song). Let’s take the first measure (remember, 4 foot taps, each of quarter-note length):</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs applescript">Smoooo - ke <span class="hljs-function_start"><span class="hljs-keyword">on</span></span> <span class="hljs-keyword">the</span> - Waaate - rrrrrrr
+Tap    - Tap       - Tap    - Tap</code></pre>
+
+<p>First beat, sixteenth notes:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs ">Smo - oo  - oo  - oo
+Tap - Tap - Tap - Tap</code></pre>
+
+<p>If ‘Hello Hel’ was <code>1-1-0-1</code> (note-note-rest-note), then ‘Smoooo..’ is <code>1-1-1-1</code> because there are no rests. We can observe the <code>1-1-1-1</code> decomposition for the first beat in other songs like <em>Eleanor Rigby</em> by The Beatles (just the dragged out ‘I’ syllable).</p>
+
+
+
+<h5 id="popular-songs-in-non-44-signature">Popular songs in non-4/4 signature</h5>
+
+<p><em>Happy Birthday</em> is in 3/4 time. Let’s do the tap routine for the first four measures:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs vbscript">(Rest) - (Rest) - Happy
+Tap    - Tap    - Tap
+
+birth  - <span class="hljs-built_in">day</span>    - <span class="hljs-keyword">to</span>
+Tap    - Tap    - Tap
+
+you    - (Rest) - Happy
+Tap    - Tap    - Tap
+
+birth  - <span class="hljs-built_in">day</span>    - <span class="hljs-keyword">to</span>
+Tap    - Tap    - Tap</code></pre>
+
+<p><em>Money</em> by Pink Floyd is in 7/4 time.</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs mathematica">Money - (<span class="hljs-keyword">Rest</span>) - (<span class="hljs-keyword">Rest</span>) - (<span class="hljs-keyword">Rest</span>) - (<span class="hljs-keyword">Rest</span>) - (<span class="hljs-keyword">Rest</span>) - (<span class="hljs-keyword">Rest</span>)
+Tap   - Tap    - Tap    - Tap    - Tap    - Tap    - Tap
+
+<span class="hljs-keyword">Get</span> A - way    - (<span class="hljs-keyword">Rest</span>) - (<span class="hljs-keyword">Rest</span>) - (<span class="hljs-keyword">Rest</span>) - (<span class="hljs-keyword">Rest</span>) - (<span class="hljs-keyword">Rest</span>)
+Tap   - Tap    - Tap    - Tap    - Tap    - Tap    - Tap
+
+<span class="hljs-keyword">Get</span> a - good   - job    - with   - more   - pay<span class="hljs-string">'n  - you'</span>re
+Tap   - Tap    - Tap    - Tap    - Tap    - Tap    - Tap
+
+Ooo   - ohkaa  - aay    - (<span class="hljs-keyword">Rest</span>) - (<span class="hljs-keyword">Rest</span>) - (<span class="hljs-keyword">Rest</span>) - (<span class="hljs-keyword">Rest</span>)
+Tap   - Tap    - Tap    - Tap    - Tap    - Tap    - Tap</code></pre>
+
+<p><em>Four Sticks</em> by Led Zeppelin uses 5/4 in parts, <em>Paranoid Android</em> by Radiohead uses 7/8 in parts, the <em>Mission Impossible theme</em> by Lalo Schifrin uses 5/4.</p>
+
+
+
+<h5 id="representing-measures">Representing measures</h5>
+
+<p>Sixteenth beats give us enough granularity to represent positions in the measure where notes are placed. A 4/4 measure, decomposed into sixteenth beats, would look like this in positional notation:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs ">(1-2-3-4)  -  (5-6-7-8)  -  (9-10-11-12) -  (13-14-15-16)
+1/4 Beat 1 -  1/4 Beat 2 -  1/4 Beat 3   -  1/4 Beat 4</code></pre>
+
+<p>Any of these numbers from 1 to 16 could be notes or rests. For the sake of representation, let’s ignore the rests (there can only be notes and rests, so if a number is missing, we know it’s a rest). Let’s go back to the <em>Comfortably Numb</em> example, whose first beat we decomposed as <code>1-1-0-1</code>. In our new notation of a measure, this would be <code>1-2-4</code> (3 is a rest, so it’s ignored). Decomposing the other beats of the measure in the old beat-wise and new positional notations, we get:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs 1c">Beat-wise                    <span class="hljs-string">|    Positional</span>
+-----------------------------<span class="hljs-string">|---------------------------------</span>
+                             <span class="hljs-string">|</span>
+<span class="hljs-number">1</span>   -  <span class="hljs-number">1</span>    -  <span class="hljs-number">0</span>  -  <span class="hljs-number">1</span>       <span class="hljs-string">|    1   -   2   -   4</span>
+Hel -  lo   -  _  -  Hel     <span class="hljs-string">|    Hel -   lo  -   Hel</span>
+                             <span class="hljs-string">|</span>
+<span class="hljs-number">1</span>   -  <span class="hljs-number">0</span>    -  <span class="hljs-number">1</span>  -  <span class="hljs-number">1</span>       <span class="hljs-string">|    5   -   7   -   8</span>
+lo  -  _    - Hel -  lo      <span class="hljs-string">|    lo  -   Hel -   lo</span>
+                             <span class="hljs-string">|</span>
+<span class="hljs-number">0</span>   -  <span class="hljs-number">0</span>    -  <span class="hljs-number">1</span>  -  <span class="hljs-number">1</span>       <span class="hljs-string">|    11  -  12</span>
+_   -  _    -  Is -  there   <span class="hljs-string">|    Is  -  there</span>
+                             <span class="hljs-string">|</span>
+<span class="hljs-number">1</span>   -  <span class="hljs-number">1</span>    -  <span class="hljs-number">1</span>  -  <span class="hljs-number">1</span>       <span class="hljs-string">|    13  - 14   - 15 - 16</span>
+any -  body -  in -  there?  <span class="hljs-string">|    any - body - in - there?</span></code></pre>
+
+<p>Ignoring the rests, this becomes <code>(1-2-4) - (5-7-8) - (11-12) - (13-14-15-16)</code> in our new positional notation. Let’s put these together into a list:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs json">[<span class="hljs-number">1</span> <span class="hljs-number">2</span> <span class="hljs-number">4</span> <span class="hljs-number">5</span> <span class="hljs-number">7</span> <span class="hljs-number">8</span> <span class="hljs-number">11</span> <span class="hljs-number">12</span> <span class="hljs-number">13</span> <span class="hljs-number">14</span> <span class="hljs-number">15</span> <span class="hljs-number">16</span>]</code></pre>
+
+<p>We just represented the first rhythmic measure of <em>Comfortably Numb</em> in an ordered list. Similarly for <em>Smoke on the Water</em>, this is:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs json">[<span class="hljs-number">1</span> <span class="hljs-number">2</span> <span class="hljs-number">3</span> <span class="hljs-number">4</span> <span class="hljs-number">7</span> <span class="hljs-number">8</span> <span class="hljs-number">9</span> <span class="hljs-number">10</span> <span class="hljs-number">11</span> <span class="hljs-number">12</span> <span class="hljs-number">13</span> <span class="hljs-number">14</span> <span class="hljs-number">15</span> <span class="hljs-number">16</span>]</code></pre>
+
+<p>As we can see, only the 5th and 6th sixteenth-beats (immediately after ‘Smooooke’ and before ‘on the’) are rests, so the first measure of <em>Smoke on the Water</em> turns out to be densely populated with notes.</p>
+
+
+
+<h5 id="meters">Meters</h5>
+
+<p>So far, we only looked at a measure as having beats of the same type (a <code>4/4</code> measure had 4 quarter-beats), but this is not an overarching rule for constructing measures.</p>
+
+<p>A <a href="https://en.wikipedia.org/wiki/Meter_%28music%29">meter</a> tells us how to <em>count</em> or <em>accentuate</em> beats in a measure. For instance, a measure in 11/4 time signature could be split into <code>2-2-3-2-2</code> or <code>4-3-2-2</code>, a measure in 4/4 time signature could be split into <code>2-2</code>, <code>3-1</code>, or so on. These are still comprised of quarter-beats, but the meter simply groups beats together to emphasize stress on certain groups of beats and de-emphasize stress on others. A measure in 11/4 can be counted in any of the following ways:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs livecodeserver"> <span class="hljs-constant">one</span>-<span class="hljs-constant">two</span> - <span class="hljs-constant">one</span>-<span class="hljs-constant">two</span> - <span class="hljs-constant">one</span>-<span class="hljs-constant">two</span>-<span class="hljs-constant">three</span> - <span class="hljs-constant">one</span>-<span class="hljs-constant">two</span> - <span class="hljs-constant">one</span>-<span class="hljs-constant">two</span>
+ <span class="hljs-constant">one</span>-<span class="hljs-constant">two</span>-<span class="hljs-constant">three</span>-<span class="hljs-constant">four</span> - <span class="hljs-constant">one</span>-<span class="hljs-constant">two</span>-<span class="hljs-constant">three</span> - <span class="hljs-constant">one</span>-<span class="hljs-constant">two</span> - <span class="hljs-constant">one</span>-<span class="hljs-constant">two</span>
+ <span class="hljs-constant">one</span>-<span class="hljs-constant">two</span>-<span class="hljs-constant">three</span>-<span class="hljs-constant">four</span> - <span class="hljs-constant">one</span>-<span class="hljs-constant">two</span>-<span class="hljs-constant">three</span>-<span class="hljs-constant">four</span> - <span class="hljs-constant">one</span>-<span class="hljs-constant">two</span>-<span class="hljs-constant">three</span></code></pre>
+
+<p>The grouping could simply mean that the <em>one</em> beats are more emphasized (preferably using notes), than the others (could contain notes or rests).</p>
+
+<p>For example, the song <em>Flower Punk</em> by Frank Zappa, a song with interchanging 5/4 and 7/4 measures, can be counted using the following meter:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs livecodeserver"><span class="hljs-constant">one</span>-<span class="hljs-constant">two</span> - <span class="hljs-constant">one</span>-<span class="hljs-constant">two</span>-<span class="hljs-constant">three</span>
+<span class="hljs-constant">one</span>-<span class="hljs-constant">two</span> - <span class="hljs-constant">one</span>-<span class="hljs-constant">two</span> - <span class="hljs-constant">one</span>-<span class="hljs-constant">two</span>-<span class="hljs-constant">three</span>
+<span class="hljs-constant">one</span>-<span class="hljs-constant">two</span> - <span class="hljs-constant">one</span>-<span class="hljs-constant">two</span>-<span class="hljs-constant">three</span>
+<span class="hljs-constant">one</span>-<span class="hljs-constant">two</span> - <span class="hljs-constant">one</span>-<span class="hljs-constant">two</span> - <span class="hljs-constant">one</span>-<span class="hljs-constant">two</span>-<span class="hljs-constant">three</span></code></pre>
+
+<p>We can count the <em>Mission Impossible</em> theme using the following meter:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs livecodeserver"><span class="hljs-constant">one</span>-<span class="hljs-constant">two</span>-<span class="hljs-constant">three</span> - <span class="hljs-constant">one</span>-<span class="hljs-constant">two</span>-<span class="hljs-constant">three</span> - <span class="hljs-constant">one</span>-<span class="hljs-constant">two</span> - <span class="hljs-constant">one</span>-<span class="hljs-constant">two</span></code></pre>
+
+
+
+<h5 id="generating-a-measure-in-114">Generating a measure in 11/4</h5>
+
+<p>So far, we’ve looked at decomposing a measure into a meter and further into a list of sixteenth-beats. The meter helps in singling out sixteenth-beat positions within the measure which <em>must</em> contain notes for emphasis, and each of the other sixteenth-beat positions could either contain a note or a rest.</p>
+
+<p>The <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L21">generate-meter</a> function takes a beat count for a measure, and generates a random meter. Here are example meters for the 11/4 and 4/4 time signatures:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs fix"><span class="hljs-attribute">user</span>=<span class="hljs-string">&gt; (generate-meter 11)
+(1 4 3 3)</span></code></pre>
+
+<p>This is the <code>one - one-two-three-four - one-two-three - one-two-three</code> counting pattern where all the ones <em>must</em> contain notes and not rests.</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs fix"><span class="hljs-attribute">user</span>=<span class="hljs-string">&gt; (generate-meter 4)
+(2 2)</span></code></pre>
+
+<p>The <code>one-two - one-two</code> meter with ones containing notes.</p>
+
+<p>Now that we have the meter, we can further decompose these into sixteenth-beats using the <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L59">segment-measure</a> function. A 11/4 measure would contain <code>11*16/4 = 44</code> sixteenth-beats.</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs ruby">user=&gt; (<span class="hljs-function"><span class="hljs-keyword">def</span> </span>meter-<span class="hljs-number">11</span> (generate-meter <span class="hljs-number">11</span>))
+<span class="hljs-comment">#'user/meter-11</span>
+user=&gt; meter-<span class="hljs-number">11</span>
+(<span class="hljs-number">1</span> <span class="hljs-number">4</span> <span class="hljs-number">3</span> <span class="hljs-number">3</span>)
+user=&gt; (segment-measure meter-<span class="hljs-number">11</span> <span class="hljs-symbol">:note-value</span> <span class="hljs-number">4</span>)
+(<span class="hljs-number">1</span> <span class="hljs-number">3</span> <span class="hljs-number">4</span> <span class="hljs-number">5</span> <span class="hljs-number">7</span> <span class="hljs-number">8</span> <span class="hljs-number">9</span> <span class="hljs-number">10</span> <span class="hljs-number">11</span> <span class="hljs-number">13</span> <span class="hljs-number">14</span> <span class="hljs-number">16</span> <span class="hljs-number">19</span> <span class="hljs-number">20</span> <span class="hljs-number">21</span> <span class="hljs-number">23</span> <span class="hljs-number">28</span> <span class="hljs-number">30</span> <span class="hljs-number">32</span> <span class="hljs-number">33</span> <span class="hljs-number">37</span> <span class="hljs-number">39</span> <span class="hljs-number">42</span> <span class="hljs-number">44</span>)
+user=&gt; (segment-measure meter-<span class="hljs-number">11</span> <span class="hljs-symbol">:note-value</span> <span class="hljs-number">4</span>)
+(<span class="hljs-number">1</span> <span class="hljs-number">2</span> <span class="hljs-number">4</span> <span class="hljs-number">5</span> <span class="hljs-number">6</span> <span class="hljs-number">8</span> <span class="hljs-number">9</span> <span class="hljs-number">11</span> <span class="hljs-number">12</span> <span class="hljs-number">15</span> <span class="hljs-number">17</span> <span class="hljs-number">19</span> <span class="hljs-number">21</span> <span class="hljs-number">22</span> <span class="hljs-number">23</span> <span class="hljs-number">25</span> <span class="hljs-number">26</span> <span class="hljs-number">28</span> <span class="hljs-number">29</span> <span class="hljs-number">31</span> <span class="hljs-number">32</span> <span class="hljs-number">33</span> <span class="hljs-number">36</span> <span class="hljs-number">37</span> <span class="hljs-number">38</span> <span class="hljs-number">39</span> <span class="hljs-number">40</span> <span class="hljs-number">42</span> <span class="hljs-number">43</span>)
+user=&gt; (segment-measure meter-<span class="hljs-number">11</span> <span class="hljs-symbol">:note-value</span> <span class="hljs-number">4</span>)
+(<span class="hljs-number">1</span> <span class="hljs-number">2</span> <span class="hljs-number">3</span> <span class="hljs-number">4</span> <span class="hljs-number">5</span> <span class="hljs-number">7</span> <span class="hljs-number">8</span> <span class="hljs-number">10</span> <span class="hljs-number">11</span> <span class="hljs-number">12</span> <span class="hljs-number">13</span> <span class="hljs-number">16</span> <span class="hljs-number">17</span> <span class="hljs-number">18</span> <span class="hljs-number">19</span> <span class="hljs-number">21</span> <span class="hljs-number">23</span> <span class="hljs-number">24</span> <span class="hljs-number">26</span> <span class="hljs-number">30</span> <span class="hljs-number">32</span> <span class="hljs-number">33</span> <span class="hljs-number">34</span> <span class="hljs-number">35</span> <span class="hljs-number">36</span> <span class="hljs-number">38</span> <span class="hljs-number">39</span> <span class="hljs-number">40</span> <span class="hljs-number">41</span> <span class="hljs-number">43</span> <span class="hljs-number">44</span>)</code></pre>
+
+<p>Note that for our <code>1-4-3-3</code> (<code>4-16-12-12</code> in sixteenth-beats) meter (the <em>ones</em> would correspond with 1, 5, 21 and 33 sixteenth-beat positions respectively), every generated measure contains a note at the 1, 5, 21 and 33 note positions. A rest can never fall on these positions.</p>
+
+
+
+<h5 id="sparseness-of-a-measure">Sparseness of a measure</h5>
+
+<p>We introduce a new factor called <em>sparseness</em> which determines how dense a measure is (Remember? The first measure of <em>Smoke on the Water</em> had more notes than <em>Comfortably Numb</em>. Ergo, it was less sparse). The higher the <em>sparseness</em> of a measure, the more rests it contains. The default sparseness is 1, which means a sixteenth-beat has equal chances of being either a note or a rest.</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs ruby">user=&gt; (segment-measure meter-<span class="hljs-number">11</span> <span class="hljs-symbol">:note-value</span> <span class="hljs-number">4</span> <span class="hljs-symbol">:sparseness</span> <span class="hljs-number">2</span>)
+(<span class="hljs-number">1</span> <span class="hljs-number">2</span> <span class="hljs-number">4</span> <span class="hljs-number">5</span> <span class="hljs-number">8</span> <span class="hljs-number">10</span> <span class="hljs-number">13</span> <span class="hljs-number">15</span> <span class="hljs-number">21</span> <span class="hljs-number">23</span> <span class="hljs-number">27</span> <span class="hljs-number">29</span> <span class="hljs-number">30</span> <span class="hljs-number">33</span> <span class="hljs-number">35</span> <span class="hljs-number">41</span> <span class="hljs-number">42</span> <span class="hljs-number">44</span>)</code></pre>
+
+<p>Let’s turn up the sparseness to an absurdly high number, say 100:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs ruby">user=&gt; (segment-measure meter-<span class="hljs-number">11</span> <span class="hljs-symbol">:note-value</span> <span class="hljs-number">4</span> <span class="hljs-symbol">:sparseness</span> <span class="hljs-number">100</span>)
+(<span class="hljs-number">1</span> <span class="hljs-number">5</span> <span class="hljs-number">21</span> <span class="hljs-number">33</span>)</code></pre>
+
+<p>Voila, we have the <em>ones</em> from the meter! The other sixteenth-beats were never filled, they all ended up as rests.</p>
+
+
+
+<h5 id="stringing-measures-together">Stringing measures together</h5>
+
+<p>The <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L78">string-measures</a> function takes a list of measures and the beat count of each measure, and strings them together. If <code>[1 3 4]</code> and <code>[1 2 4]</code> were the measures to be strung together, the result would be <code>[1 3 4 5 6 8]</code>.</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs vbnet">user=&gt; (<span class="hljs-built_in">string</span>-measures <span class="hljs-comment">'((1 3 4) (1 2 4)) 4)</span>
+(<span class="hljs-number">1</span> <span class="hljs-number">3</span> <span class="hljs-number">4</span> <span class="hljs-number">5</span> <span class="hljs-number">6</span> <span class="hljs-number">8</span>)</code></pre>
+
+<p>The <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L132">generate-rhythm</a> function takes the measure count and beat count of each measure, and optionally the minimum note value (sixteen being the default) and sparseness (1 default), and generates the respective number of measures, each of the specified number of beats. For instance, this generates 10 measures, each of 4/4 time signature:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs php">user=&gt; (def rhythm (generate-rhythm <span class="hljs-number">10</span> <span class="hljs-number">4</span>))
+<span class="hljs-comment">#'user/rhythm</span>
+user=&gt; rhythm
+(<span class="hljs-number">1</span> <span class="hljs-number">3</span> <span class="hljs-number">5</span> <span class="hljs-number">7</span> <span class="hljs-number">9</span> <span class="hljs-number">11</span> <span class="hljs-number">13</span> <span class="hljs-number">15</span> <span class="hljs-number">17</span> <span class="hljs-number">19</span> <span class="hljs-number">21</span> <span class="hljs-number">23</span> <span class="hljs-number">25</span> <span class="hljs-number">27</span> <span class="hljs-number">29</span> <span class="hljs-number">31</span> <span class="hljs-number">33</span> <span class="hljs-number">35</span> <span class="hljs-number">37</span> <span class="hljs-number">39</span>)
+user=&gt; (count rhythm)
+<span class="hljs-number">20</span></code></pre>
+
+
+
+<h5 id="tldr-rhythm">TL;DR Rhythm</h5>
+
+<ul>
+<li>We construct a random <em>meter</em> for a single measure of a specific time signature using the <code>generate-meter</code> function. Say, <code>(1 4 3 3)</code> for a 11/4 measure (11 quarter-beats, counted <code>one - one-two-three-four - one-two-three - one-two-three</code>).</li>
+</ul>
+
+
+
+<pre class="prettyprint"><code class=" hljs php">user=&gt; (def meter-<span class="hljs-number">11</span> (generate-meter <span class="hljs-number">11</span>))
+<span class="hljs-comment">#'user/meter-11</span>
+user=&gt; meter-<span class="hljs-number">11</span>
+(<span class="hljs-number">1</span> <span class="hljs-number">4</span> <span class="hljs-number">3</span> <span class="hljs-number">3</span>)</code></pre>
+
+<ul>
+<li>We segment the measure further into sixteenth-beats, using the <code>segment-measure</code> function. A 11/4 measure will have <code>11 * 16/4 = 44</code> sixteenth beats, and since the meter specifies positions that <em>must</em> contain notes, our measure will contain notes at <code>1</code>, <code>1 + (16/4)*1 = 5</code>, <code>5 + (16/4)*4 = 21</code> and <code>21 + (16/4) * 3 = 33</code> sixteenth-beat positions. The rest of the beats are populated randomly with notes or rests.</li>
+</ul>
+
+
+
+<pre class="prettyprint"><code class=" hljs ruby">user=&gt; (segment-measure meter-<span class="hljs-number">11</span> <span class="hljs-symbol">:note-value</span> <span class="hljs-number">4</span>)
+(<span class="hljs-number">1</span> <span class="hljs-number">3</span> <span class="hljs-number">4</span> <span class="hljs-number">5</span> <span class="hljs-number">7</span> <span class="hljs-number">8</span> <span class="hljs-number">9</span> <span class="hljs-number">10</span> <span class="hljs-number">11</span> <span class="hljs-number">13</span> <span class="hljs-number">14</span> <span class="hljs-number">16</span> <span class="hljs-number">19</span> <span class="hljs-number">20</span> <span class="hljs-number">21</span> <span class="hljs-number">23</span> <span class="hljs-number">28</span> <span class="hljs-number">30</span> <span class="hljs-number">32</span> <span class="hljs-number">33</span> <span class="hljs-number">37</span> <span class="hljs-number">39</span> <span class="hljs-number">42</span> <span class="hljs-number">44</span>)</code></pre>
+
+<ul>
+<li>The ratio of notes to rests in the measure can be determined by using the <em>sparseness</em> parameter (whose default value is 1).</li>
+</ul>
+
+
+
+<pre class="prettyprint"><code class=" hljs ruby">user=&gt; (segment-measure meter-<span class="hljs-number">11</span> <span class="hljs-symbol">:note-value</span> <span class="hljs-number">4</span> <span class="hljs-symbol">:sparseness</span> <span class="hljs-number">2</span>)
+(<span class="hljs-number">1</span> <span class="hljs-number">2</span> <span class="hljs-number">4</span> <span class="hljs-number">5</span> <span class="hljs-number">8</span> <span class="hljs-number">10</span> <span class="hljs-number">13</span> <span class="hljs-number">15</span> <span class="hljs-number">21</span> <span class="hljs-number">23</span> <span class="hljs-number">27</span> <span class="hljs-number">29</span> <span class="hljs-number">30</span> <span class="hljs-number">33</span> <span class="hljs-number">35</span> <span class="hljs-number">41</span> <span class="hljs-number">42</span> <span class="hljs-number">44</span>)
+user=&gt; (segment-measure meter-<span class="hljs-number">11</span> <span class="hljs-symbol">:note-value</span> <span class="hljs-number">4</span> <span class="hljs-symbol">:sparseness</span> <span class="hljs-number">100</span>)
+(<span class="hljs-number">1</span> <span class="hljs-number">5</span> <span class="hljs-number">21</span> <span class="hljs-number">33</span>)</code></pre>
+
+<ul>
+<li>We use the <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L132">generate-rhythm</a> function to create a rhythm of multiple measures. It takes the measure count and beat count of each measure, and optionally the minimum note value (sixteen being the default) and sparseness (1 default), and generates the respective number of measures, each of the specified number of beats.</li>
+</ul>
+
+
+
+<pre class="prettyprint"><code class=" hljs php">user=&gt; (def rhythm (generate-rhythm <span class="hljs-number">10</span> <span class="hljs-number">4</span>))
+<span class="hljs-comment">#'user/rhythm</span>
+user=&gt; rhythm
+(<span class="hljs-number">1</span> <span class="hljs-number">3</span> <span class="hljs-number">5</span> <span class="hljs-number">7</span> <span class="hljs-number">9</span> <span class="hljs-number">11</span> <span class="hljs-number">13</span> <span class="hljs-number">15</span> <span class="hljs-number">17</span> <span class="hljs-number">19</span> <span class="hljs-number">21</span> <span class="hljs-number">23</span> <span class="hljs-number">25</span> <span class="hljs-number">27</span> <span class="hljs-number">29</span> <span class="hljs-number">31</span> <span class="hljs-number">33</span> <span class="hljs-number">35</span> <span class="hljs-number">37</span> <span class="hljs-number">39</span>)
+user=&gt; (count rhythm)
+<span class="hljs-number">20</span></code></pre>
+
+<hr>
+
+
+
+<h3 id="melody">Melody</h3>
+
+<p>Melody is, possibly, the identity of a song. It can be considered the prime contributing factor to the <em>mood</em> or <em>feel</em> of a song. Though a melody cannot exist without a rhythm, both rhythm and harmony can be considered as support structures that enrich the melody. There are probably a huge number of patterns and methods in which listenable melodies can be generated procedurally.</p>
+
+
+
+<h5 id="notes">Notes</h5>
+
+<p><a href="https://en.wikipedia.org/wiki/Musical_note">Notes</a> are sounds of a certain pitch or frequency. The A4 note is, for instance, a sound of 440 Hz. The A5 note is a sound of 880 Hz. The musical note starts from C0 at 16.35 Hz. Unlike the English alphabet, musical notes in western musical notation start from C and end with B, as follows:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs mathematica"><span class="hljs-keyword">C</span>  <span class="hljs-keyword">C</span>#/Db  <span class="hljs-keyword">D</span>  <span class="hljs-keyword">D</span>#/Eb  <span class="hljs-keyword">E</span>  F  F#/Gb  G  G#/Ab  A  A#/Bb  B</code></pre>
+
+<p><code>#</code> indicates a <em>Sharp</em> and <code>b</code> indicates a <em>Flat</em>. Sharps, or flats, are indicated by the black keys on the piano. Ever wondered why there is no black key between <code>B#/Cb</code> and <code>E#/Fb</code>? There <em>is</em> no <code>B#/Cb</code> or <code>E#/Fb</code>. If you sharp a B, you get a C and if you sharp an E you get an F. This is merely a convention that arose from the constraint that there could only be 12 notes in an <em>octave</em>. In some forms of musical notation, E# and B# do exist.</p>
+
+<p>The frequency ratio between a note and its previous note is the <a href="https://en.wikipedia.org/wiki/Twelfth_root_of_two">twelfth root of two</a>, or <code>1.0594</code>. For instance, <code>C#0 (17.32 Hz) / C0 (16.35 Hz) = 1.0594</code>.</p>
+
+
+
+<h5 id="octaves">Octaves</h5>
+
+<p>An <a href="https://en.wikipedia.org/wiki/Octave">octave</a> is the distance between a note of frequency X and the note of frequency 2X, containing twelve notes. The range of frequencies between A4 and A5 constitute one octave.</p>
+
+<p>For instance, here’s the octave from A4 to A5 and the corresponding frequencies:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs delphi">A4   A<span class="hljs-string">#4</span>/Bb4  B4      C5      C<span class="hljs-string">#5</span>/Db5   D5      D<span class="hljs-string">#5</span>/Eb5   E5      F5      F<span class="hljs-string">#5</span>/Gb5   G5      G<span class="hljs-string">#5</span>/Ab5
+<span class="hljs-number">440</span>  <span class="hljs-number">466.16</span>   <span class="hljs-number">498.88</span>  <span class="hljs-number">523.25</span>  <span class="hljs-number">554.37</span>    <span class="hljs-number">587.33</span>  <span class="hljs-number">622.25</span>    <span class="hljs-number">659.25</span>  <span class="hljs-number">698.45</span>  <span class="hljs-number">739.99</span>    <span class="hljs-number">783.99</span>  <span class="hljs-number">830.61</span></code></pre>
+
+
+
+<h5 id="semitones-and-whole-tones">Semitones and Whole tones</h5>
+
+<ul>
+<li>The interval between one note and the next (A4 and A#4) is a <a href="https://en.wikipedia.org/wiki/Semitone">semitone</a> or a half-step. They’re indicated by <code>H</code>.</li>
+<li>The interval between a note and the note two semitones after it (A4 and B4) is a <a href="https://en.wikipedia.org/wiki/Major_second">whole tone</a> or a whole-step. They’re indicated by <code>W</code>.</li>
+</ul>
+
+
+
+<h5 id="scales">Scales</h5>
+
+<p><a href="https://en.wikipedia.org/wiki/Scale_%28music%29">Scales</a> are groups of notes, ascending in frequency. <a href="https://en.wikipedia.org/wiki/Degree_%28music%29">Scale Degrees</a> indicate the position of each note in the scale. The first note of a scale (the note after which the scale) is named, is called the <em>tonic</em> of the scale. Its scale degree is 1.</p>
+
+<p>Depending on how a scale is built, it could exhibit a certain mood, characteristic or emotion. The most used types of scales are the major scales and the minor scales, but there are a lot of other types.</p>
+
+<p><a href="https://en.wikipedia.org/wiki/Major_scale">Major scales</a> are constructed using the <code>W-W-H-W-W-W-H</code> pattern (W-Whole step, H-Half step). For example, the A4 major scale is as follows:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs css"><span class="hljs-tag">A4</span> <span class="hljs-tag">-</span> <span class="hljs-tag">B4</span> <span class="hljs-tag">-</span> <span class="hljs-tag">C</span><span class="hljs-id">#5</span> <span class="hljs-tag">-</span> <span class="hljs-tag">D5</span> <span class="hljs-tag">-</span> <span class="hljs-tag">E5</span> <span class="hljs-tag">-</span> <span class="hljs-tag">F</span><span class="hljs-id">#5</span> <span class="hljs-tag">-</span> <span class="hljs-tag">G</span><span class="hljs-id">#5</span> <span class="hljs-tag">-</span> <span class="hljs-tag">A5</span>
+   <span class="hljs-tag">W</span>    <span class="hljs-tag">W</span>     <span class="hljs-tag">H</span>    <span class="hljs-tag">W</span>    <span class="hljs-tag">W</span>     <span class="hljs-tag">W</span>     <span class="hljs-tag">H</span></code></pre>
+
+<p>They tend to express <em>positive</em> emotions like majesty, victory, curiosity, love, joy and so on, in general.</p>
+
+<p><a href="http://en.wikipedia.org/wiki/Minor_scale">Minor scales</a> or <em>natural minor</em> scales are constructed using the <code>W-H-W-W-H-W-W</code> pattern. For example, the A4 minor is as follows:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs ">A4 - B4 - C5 - D5 - E5 - F5 - G5 - A5
+   W    H    W    W    W    W    W</code></pre>
+
+<p>They tend to express <em>negative</em> emotions like betrayal, melancholy, tragedy, ominousness and so on, in general.</p>
+
+<p>Here’s a document for further reading on <a href="http://biteyourownelbow.com/keychar.htm">Characteristics of Musical Keys</a>.</p>
+
+
+
+<h5 id="intervals-unison-steps-and-leaps">Intervals - unison, steps and leaps</h5>
+
+<p>An <a href="https://en.wikipedia.org/wiki/Interval_%28music%29">interval</a> is the difference between two notes or pitches. The smallest interval is the semitone. Here are the intervals for the A4 minor scale (T - Tonic):</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs r">A4 - B4 - C5 - D5 - E5 - F5 - G5 - A5
+<span class="hljs-literal">T</span>  - <span class="hljs-number">1</span>  - <span class="hljs-number">2</span>  - <span class="hljs-number">3</span>  - <span class="hljs-number">4</span>  - <span class="hljs-number">5</span>  - <span class="hljs-number">6</span>  - <span class="hljs-number">7</span></code></pre>
+
+<p>C5, for instance, is 2 intervals away from A4 in the A4 minor scale. G5 is 6 intervals away.</p>
+
+<p>Moving by zero intervals in the scale (staying on the same note) is called an <a href="https://en.wikipedia.org/wiki/Unison"><em>unison</em></a>. <br>
+Moving by a single interval in the scale is called a <a href="https://en.wikipedia.org/wiki/Steps_and_skips"><em>step</em></a>. <br>
+Moving by two or more intervals in the scale is called a <a href="https://en.wikipedia.org/wiki/Steps_and_skips"><em>leap</em></a>.</p>
+
+<p>In an octave, based on relative terms to the first note, each note has a designation that indicates the number of semitones required to reach it. These are the <a href="https://en.wikipedia.org/wiki/Interval_%28music%29#Main_intervals">main intervals</a>:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs livecodeserver">A4     | A<span class="hljs-comment">#4/Bb4      | B4           | C5          | C#5/Db5     | D5             |</span>
+Unison | Minor <span class="hljs-keyword">second</span> | Major <span class="hljs-keyword">second</span> | Minor <span class="hljs-keyword">third</span> | Major <span class="hljs-keyword">third</span> | Perfect <span class="hljs-keyword">fourth</span> |
+
+D<span class="hljs-comment">#5/Eb5       | E5          | F5          | F#5/Gb5       | G5            | G#5/Ab5        |</span>
+Perfect <span class="hljs-keyword">fifth</span> | Minor <span class="hljs-keyword">sixth</span> | Major <span class="hljs-keyword">sixth</span> | Minor <span class="hljs-keyword">seventh</span> | Major <span class="hljs-keyword">seventh</span> | Perfect octave |</code></pre>
+
+
+
+<h5 id="melodic-motion-conjunct-and-disjunct">Melodic motion - conjunct and disjunct</h5>
+
+<p><a href="https://en.wikipedia.org/wiki/Melodic_motion">Melodic motion</a> characterizes the tendency of a melody to <em>jump around</em>, or the <em>contours</em> of the melody. The most common types of melodic motion are <em>conjunct motion</em> and <em>disjunct motion</em>, though there are lot of other ways in which a melody can be structured.</p>
+
+<p>A melody that exhibits <em>conjunct motion</em> consists of a lot of <em>steps</em> (single intervals or successive notes) and <em>unisons</em> (same notes), and very little <em>leaps</em>. <br>
+A melody that exhibits <em>disjunct motion</em> consists of a lot of <em>leaps</em> (multiple intervals) and very little <em>steps</em> and <em>unisons</em>.</p>
+
+<p>Most popular music uses <em>conjunct motion</em>. The melodies tend to be closely structured around a scale’s notes by traversing the scale in steps, whilst avoiding leaps.</p>
+
+<p>Let’s pick apart the first four vocal measures of <em>My Generation</em> by <em>The Who</em>. These are roughly the notes of each of the syllables:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs vbnet">Peo - ple - <span class="hljs-keyword">try</span> - <span class="hljs-keyword">to</span> 
+G   - G   - F   - F<span class="hljs-preprocessor"># </span>
+
+put - us - d<span class="hljs-comment">' - down</span>
+C   - C  - Bb - Bb
+
+talk - <span class="hljs-keyword">in</span><span class="hljs-comment">' - 'bout - my</span>
+D    - D   - E     - E
+
+gen - er - a - tion
+F   - F<span class="hljs-preprocessor"># - E - D</span></code></pre>
+
+<p>This is a tune in the F major scale <code>F - G - A - A#/Bb - C - D - E - F</code> with an F# added in. Here’s how the melodic motion is (U - Unison, S - Step, L - Leap):</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs applescript">Peo - ple - <span class="hljs-keyword">try</span> - <span class="hljs-keyword">to</span> - <span class="hljs-keyword">put</span> - us - d' - down - talk - <span class="hljs-keyword">in</span>' - 'bout - <span class="hljs-keyword">my</span> - gen - er - a - tion
+G   - G   - F   - F<span class="hljs-comment"># - C   - C  - Bb - Bb   - D    - D   - E     - E  - F   - F# - E - D</span>
+    U     S     S    L     U    S    U      L      U     S       S    S     S    S   S</code></pre>
+
+<p>That’s just <em>two</em> leaps while we have <em>four</em> unisons and <em>nine</em> steps. This is clearly conjunct motion.</p>
+
+<p>Melodic motion is the most important quality of a melody that determines its quality and <em>listenability</em>. Simulating melodic motion is going to be the purpose of every procedure we write that generates music.</p>
+
+
+
+<h5 id="weighted-random-interval-jumps">Weighted random interval jumps</h5>
+
+<p>Let’s take the F major scale:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs ruby">user=&gt; (<span class="hljs-function"><span class="hljs-keyword">def</span> </span>f-major (scale <span class="hljs-symbol">:f4</span> <span class="hljs-symbol">:major</span>))
+<span class="hljs-comment">#'user/f-major</span>
+user=&gt; f-major
+(<span class="hljs-number">65</span> <span class="hljs-number">67</span> <span class="hljs-number">69</span> <span class="hljs-number">70</span> <span class="hljs-number">72</span> <span class="hljs-number">74</span> <span class="hljs-number">76</span> <span class="hljs-number">77</span>)</code></pre>
+
+<p>Let’s start with the first note F, construct one unison, two up-steps, one 3-interval up-leap, two down-steps, and end with the last note of the scale. That would give us <code>F - F - G - A - D - C - Bb - F</code>, or in scale degrees, <code>1 - 1 - 2 - 3 - 6 - 5 - 4 - 8</code>. This is typical conjunct motion.</p>
+
+<p>In conjunct motion, since steps are more likely to appear than leaps, let’s assign the chances as follows:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs mathematica">Unison | <span class="hljs-keyword">Up</span> step | <span class="hljs-keyword">Down</span> step | <span class="hljs-keyword">Up</span> leap | <span class="hljs-keyword">Down</span> leap | Octave up | Octave down
+  <span class="hljs-number">6</span>%   |   <span class="hljs-number">35</span>%   |    <span class="hljs-number">35</span>%    |    <span class="hljs-number">8</span>%   |     <span class="hljs-number">8</span>%    |     <span class="hljs-number">4</span>%    |     <span class="hljs-number">4</span>%</code></pre>
+
+<p>The <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/melody.clj#L48">conjunct-motion</a> function takes a scale and a scale degree and generates a new degree in the scale by choosing a random interval based on these weights.</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs lasso">user<span class="hljs-subst">=&gt;</span> (conjunct<span class="hljs-attribute">-motion</span> f<span class="hljs-attribute">-major</span> <span class="hljs-number">3</span>)
+<span class="hljs-number">2</span>
+user<span class="hljs-subst">=&gt;</span> (conjunct<span class="hljs-attribute">-motion</span> f<span class="hljs-attribute">-major</span> <span class="hljs-number">3</span>)
+<span class="hljs-number">2</span>
+user<span class="hljs-subst">=&gt;</span> (conjunct<span class="hljs-attribute">-motion</span> f<span class="hljs-attribute">-major</span> <span class="hljs-number">3</span>)
+<span class="hljs-number">4</span>
+user<span class="hljs-subst">=&gt;</span> (conjunct<span class="hljs-attribute">-motion</span> f<span class="hljs-attribute">-major</span> <span class="hljs-number">3</span>)
+<span class="hljs-number">2</span>
+user<span class="hljs-subst">=&gt;</span> (conjunct<span class="hljs-attribute">-motion</span> f<span class="hljs-attribute">-major</span> <span class="hljs-number">3</span>)
+<span class="hljs-number">6</span></code></pre>
+
+<p>We started with the 3rd note (A4), and it generated the second note (down step, note G4) thrice, fourth note (up step, note Bb) once and the sixth note (3-interval leap, note D5) once. It took five tries to generate a leap.</p>
+
+<p>Let’s take the same scale, start with the first note F, construct one unison, two 3-interval up-leaps, one down-step, two 2-interval down-leaps, and end with the last note of the scale. That would give us <code>F - F - Bb - E - D - Bb - G - F</code>, or in scale degrees, <code>1 - 1 - 4 - 7 - 6 - 4 - 2 - 8</code>. This is typical disjunct motion.</p>
+
+<p>In disjunct motion, since leaps are more likely to appear than steps, let’s reassign the chances as follows:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs mathematica">Unison | <span class="hljs-keyword">Up</span> step | <span class="hljs-keyword">Down</span> step | <span class="hljs-keyword">Up</span> leap | <span class="hljs-keyword">Down</span> leap | Octave up | Octave down
+  <span class="hljs-number">6</span>%   |    <span class="hljs-number">8</span>%   |     <span class="hljs-number">8</span>%    |   <span class="hljs-number">30</span>%   |    <span class="hljs-number">30</span>%    |     <span class="hljs-number">9</span>%    |     <span class="hljs-number">9</span>%</code></pre>
+
+<p>The <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/melody.clj#L52">disjunct-motion</a> function takes a scale and a scale degree and generates a new degree in the scale based on these new weights.</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs lasso">user<span class="hljs-subst">=&gt;</span> (disjunct<span class="hljs-attribute">-motion</span> f<span class="hljs-attribute">-major</span> <span class="hljs-number">3</span>)
+<span class="hljs-number">1</span>
+user<span class="hljs-subst">=&gt;</span> (disjunct<span class="hljs-attribute">-motion</span> f<span class="hljs-attribute">-major</span> <span class="hljs-number">3</span>)
+<span class="hljs-number">6</span>
+user<span class="hljs-subst">=&gt;</span> (disjunct<span class="hljs-attribute">-motion</span> f<span class="hljs-attribute">-major</span> <span class="hljs-number">3</span>)
+<span class="hljs-number">2</span>
+user<span class="hljs-subst">=&gt;</span> (disjunct<span class="hljs-attribute">-motion</span> f<span class="hljs-attribute">-major</span> <span class="hljs-number">3</span>)
+<span class="hljs-number">3</span>
+user<span class="hljs-subst">=&gt;</span> (disjunct<span class="hljs-attribute">-motion</span> f<span class="hljs-attribute">-major</span> <span class="hljs-number">3</span>)
+<span class="hljs-number">8</span></code></pre>
+
+<p>We started with the same third note (A4), and in the same five tries, we hit three leaps (notes F4, D5 and F5), one step (G4) and one unison (A4).</p>
+
+
+
+<h5 id="simulating-melodic-motion">Simulating melodic motion</h5>
+
+<p>Using weighted random interval construction, we can generate one note after another and construct a coherent melody that’s either <em>conjunct</em> or <em>disjunct</em>. What if we could do this for every note in a rhythmic measure, and consequently for every rhythmic measure in a musical piece?</p>
+
+<p><a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L112">generate-intervals</a> is a higher-order function that takes three parameters:</p>
+
+<ul>
+<li>A <em>procedure</em> or a fundamental method for simulating melodic motion, such as the methods <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/melody.clj#L48">conjunct-motion</a> or <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/melody.clj#L52">disjunct-motion</a>.</li>
+<li>A scale.</li>
+<li>Number of notes to generate.</li>
+</ul>
+
+<p>It starts at the tonic, constructs a list of intervals in the scale(s) based on the procedure passed to it, and ends either at the tonic (Degree 1) or one octave above the tonic (Degree 1 or 8). Let’s generate 20 notes in F4 major using both conjunct and disjunct motion:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs php">user=&gt; (def f-major (scale :f4 :major))
+<span class="hljs-comment">#'user/f-major</span>
+user=&gt; f-major
+(<span class="hljs-number">65</span> <span class="hljs-number">67</span> <span class="hljs-number">69</span> <span class="hljs-number">70</span> <span class="hljs-number">72</span> <span class="hljs-number">74</span> <span class="hljs-number">76</span> <span class="hljs-number">77</span>)
+user=&gt; (def conjunct-<span class="hljs-number">20</span> (generate-intervals conjunct-motion f-major <span class="hljs-number">20</span>))
+<span class="hljs-comment">#'user/conjunct-20</span>
+user=&gt; conjunct-<span class="hljs-number">20</span>
+(<span class="hljs-number">1</span> <span class="hljs-number">2</span> <span class="hljs-number">1</span> <span class="hljs-number">5</span> <span class="hljs-number">6</span> <span class="hljs-number">7</span> <span class="hljs-number">3</span> <span class="hljs-number">4</span> <span class="hljs-number">1</span> <span class="hljs-number">2</span> <span class="hljs-number">3</span> <span class="hljs-number">2</span> <span class="hljs-number">3</span> <span class="hljs-number">3</span> <span class="hljs-number">4</span> <span class="hljs-number">3</span> <span class="hljs-number">2</span> <span class="hljs-number">5</span> <span class="hljs-number">6</span> <span class="hljs-number">1</span>)
+user=&gt; (def disjunct-<span class="hljs-number">20</span> (generate-intervals disjunct-motion f-major <span class="hljs-number">20</span>))
+<span class="hljs-comment">#'user/disjunct-20</span>
+user=&gt; disjunct-<span class="hljs-number">20</span>
+(<span class="hljs-number">1</span> <span class="hljs-number">7</span> <span class="hljs-number">7</span> <span class="hljs-number">8</span> <span class="hljs-number">4</span> <span class="hljs-number">6</span> <span class="hljs-number">7</span> <span class="hljs-number">1</span> <span class="hljs-number">6</span> <span class="hljs-number">5</span> <span class="hljs-number">8</span> <span class="hljs-number">3</span> <span class="hljs-number">6</span> <span class="hljs-number">3</span> <span class="hljs-number">4</span> <span class="hljs-number">2</span> <span class="hljs-number">8</span> <span class="hljs-number">2</span> <span class="hljs-number">1</span> <span class="hljs-number">8</span>)</code></pre>
+
+<p>We now have two 20-note melodies!</p>
+
+<p>The <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L121">intervals-&gt;notes</a> function converts the intervals to actual <em>overtone</em> notes in the scale. It takes two arguments, the melody itself, and the scale. The <code>find-note-name</code> overtone function converts an overtone note into musical notation (Example: 65 to :F4).</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs ruby">user=&gt; (intervals-&gt;notes conjunct-<span class="hljs-number">20</span> f-major)
+(<span class="hljs-number">65</span> <span class="hljs-number">67</span> <span class="hljs-number">65</span> <span class="hljs-number">72</span> <span class="hljs-number">74</span> <span class="hljs-number">76</span> <span class="hljs-number">69</span> <span class="hljs-number">70</span> <span class="hljs-number">65</span> <span class="hljs-number">67</span> <span class="hljs-number">69</span> <span class="hljs-number">67</span> <span class="hljs-number">69</span> <span class="hljs-number">69</span> <span class="hljs-number">70</span> <span class="hljs-number">69</span> <span class="hljs-number">67</span> <span class="hljs-number">72</span> <span class="hljs-number">74</span> <span class="hljs-number">65</span>)
+user=&gt; (intervals-&gt;notes disjunct-<span class="hljs-number">20</span> f-major)
+(<span class="hljs-number">65</span> <span class="hljs-number">76</span> <span class="hljs-number">76</span> <span class="hljs-number">77</span> <span class="hljs-number">70</span> <span class="hljs-number">74</span> <span class="hljs-number">76</span> <span class="hljs-number">65</span> <span class="hljs-number">74</span> <span class="hljs-number">72</span> <span class="hljs-number">77</span> <span class="hljs-number">69</span> <span class="hljs-number">74</span> <span class="hljs-number">69</span> <span class="hljs-number">70</span> <span class="hljs-number">67</span> <span class="hljs-number">77</span> <span class="hljs-number">67</span> <span class="hljs-number">65</span> <span class="hljs-number">77</span>)
+user=&gt; (map find-note-name (intervals-&gt;notes conjunct-<span class="hljs-number">20</span> f-major))
+(<span class="hljs-symbol">:F4</span> <span class="hljs-symbol">:G4</span> <span class="hljs-symbol">:F4</span> <span class="hljs-symbol">:C5</span> <span class="hljs-symbol">:D5</span> <span class="hljs-symbol">:E5</span> <span class="hljs-symbol">:A4</span> <span class="hljs-symbol">:Bb4</span> <span class="hljs-symbol">:F4</span> <span class="hljs-symbol">:G4</span> <span class="hljs-symbol">:A4</span> <span class="hljs-symbol">:G4</span> <span class="hljs-symbol">:A4</span> <span class="hljs-symbol">:A4</span> <span class="hljs-symbol">:Bb4</span> <span class="hljs-symbol">:A4</span> <span class="hljs-symbol">:G4</span> <span class="hljs-symbol">:C5</span> <span class="hljs-symbol">:D5</span> <span class="hljs-symbol">:F4</span>)
+user=&gt; (map find-note-name (intervals-&gt;notes disjunct-<span class="hljs-number">20</span> f-major))
+(<span class="hljs-symbol">:F4</span> <span class="hljs-symbol">:E5</span> <span class="hljs-symbol">:E5</span> <span class="hljs-symbol">:F5</span> <span class="hljs-symbol">:Bb4</span> <span class="hljs-symbol">:D5</span> <span class="hljs-symbol">:E5</span> <span class="hljs-symbol">:F4</span> <span class="hljs-symbol">:D5</span> <span class="hljs-symbol">:C5</span> <span class="hljs-symbol">:F5</span> <span class="hljs-symbol">:A4</span> <span class="hljs-symbol">:D5</span> <span class="hljs-symbol">:A4</span> <span class="hljs-symbol">:Bb4</span> <span class="hljs-symbol">:G4</span> <span class="hljs-symbol">:F5</span> <span class="hljs-symbol">:G4</span> <span class="hljs-symbol">:F4</span> <span class="hljs-symbol">:F5</span>)</code></pre>
+
+<p>Suh-weet! We just generated both conjunct and disjunct melodies by simulating melodic motion.</p>
+
+
+
+<h5 id="tldr-melody">TL;DR Melody</h5>
+
+<ul>
+<li>We construct a scale (F4 major, in our example) using overtone’s <code>scale</code> function:</li>
+</ul>
+
+
+
+<pre class="prettyprint"><code class=" hljs ruby">user=&gt; (<span class="hljs-function"><span class="hljs-keyword">def</span> </span>f-major (scale <span class="hljs-symbol">:f4</span> <span class="hljs-symbol">:major</span>))
+<span class="hljs-comment">#'user/f-major</span>
+user=&gt; f-major
+(<span class="hljs-number">65</span> <span class="hljs-number">67</span> <span class="hljs-number">69</span> <span class="hljs-number">70</span> <span class="hljs-number">72</span> <span class="hljs-number">74</span> <span class="hljs-number">76</span> <span class="hljs-number">77</span>)</code></pre>
+
+<ul>
+<li>The functions <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/melody.clj#L48">conjunct-motion</a> and <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/melody.clj#L52">disjunct-motion</a> take scales and scale degrees as their parameters, and generate a new scale degree based on weighted random interval jumps. The chances of generating a step are higher than a leap in conjunct motion, and vice-versa in disjunct motion:</li>
+</ul>
+
+
+
+<pre class="prettyprint"><code class=" hljs lasso">user<span class="hljs-subst">=&gt;</span> (conjunct<span class="hljs-attribute">-motion</span> f<span class="hljs-attribute">-major</span> <span class="hljs-number">3</span>)
+<span class="hljs-number">2</span>
+user<span class="hljs-subst">=&gt;</span> (conjunct<span class="hljs-attribute">-motion</span> f<span class="hljs-attribute">-major</span> <span class="hljs-number">3</span>)
+<span class="hljs-number">4</span>
+user<span class="hljs-subst">=&gt;</span> (disjunct<span class="hljs-attribute">-motion</span> f<span class="hljs-attribute">-major</span> <span class="hljs-number">3</span>)
+<span class="hljs-number">1</span>
+user<span class="hljs-subst">=&gt;</span> (disjunct<span class="hljs-attribute">-motion</span> f<span class="hljs-attribute">-major</span> <span class="hljs-number">3</span>)
+<span class="hljs-number">6</span></code></pre>
+
+<ul>
+<li>We use the higher-order function <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L112">generate-intervals</a> that takes three parameters (the procedure that generates new degrees, the scale, and the number of notes to generate), to generate multiple interval jumps and create a melodic line using conjunct and disjunct motion. It always starts and ends at the tonic (or one octave above), because a musical piece that doesn’t end on the tonic doesn’t feel <em>complete</em>.</li>
+</ul>
+
+
+
+<pre class="prettyprint"><code class=" hljs php">user=&gt; (def conjunct-<span class="hljs-number">20</span> (generate-intervals conjunct-motion f-major <span class="hljs-number">20</span>))
+<span class="hljs-comment">#'user/conjunct-20</span>
+user=&gt; conjunct-<span class="hljs-number">20</span>
+(<span class="hljs-number">1</span> <span class="hljs-number">2</span> <span class="hljs-number">1</span> <span class="hljs-number">5</span> <span class="hljs-number">6</span> <span class="hljs-number">7</span> <span class="hljs-number">3</span> <span class="hljs-number">4</span> <span class="hljs-number">1</span> <span class="hljs-number">2</span> <span class="hljs-number">3</span> <span class="hljs-number">2</span> <span class="hljs-number">3</span> <span class="hljs-number">3</span> <span class="hljs-number">4</span> <span class="hljs-number">3</span> <span class="hljs-number">2</span> <span class="hljs-number">5</span> <span class="hljs-number">6</span> <span class="hljs-number">1</span>)
+user=&gt; (def disjunct-<span class="hljs-number">20</span> (generate-intervals disjunct-motion f-major <span class="hljs-number">20</span>))
+<span class="hljs-comment">#'user/disjunct-20</span>
+user=&gt; disjunct-<span class="hljs-number">20</span>
+(<span class="hljs-number">1</span> <span class="hljs-number">7</span> <span class="hljs-number">7</span> <span class="hljs-number">8</span> <span class="hljs-number">4</span> <span class="hljs-number">6</span> <span class="hljs-number">7</span> <span class="hljs-number">1</span> <span class="hljs-number">6</span> <span class="hljs-number">5</span> <span class="hljs-number">8</span> <span class="hljs-number">3</span> <span class="hljs-number">6</span> <span class="hljs-number">3</span> <span class="hljs-number">4</span> <span class="hljs-number">2</span> <span class="hljs-number">8</span> <span class="hljs-number">2</span> <span class="hljs-number">1</span> <span class="hljs-number">8</span>)</code></pre>
+
+<ul>
+<li>We use a combination of the functions <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L121">intervals-&gt;notes</a> (a function that converts the intervals to actual <em>overtone</em> notes in the scale; it takes two arguments, the melody itself, and the scale) and <code>find-note-name</code> (overtone function that converts an overtone note into musical notation, such as 65 to :F4) to convert the generated melodic line from scale degrees to musical notes.</li>
+</ul>
+
+
+
+<pre class="prettyprint"><code class=" hljs ruby">user=&gt; (intervals-&gt;notes conjunct-<span class="hljs-number">20</span> f-major)
+(<span class="hljs-number">65</span> <span class="hljs-number">67</span> <span class="hljs-number">65</span> <span class="hljs-number">72</span> <span class="hljs-number">74</span> <span class="hljs-number">76</span> <span class="hljs-number">69</span> <span class="hljs-number">70</span> <span class="hljs-number">65</span> <span class="hljs-number">67</span> <span class="hljs-number">69</span> <span class="hljs-number">67</span> <span class="hljs-number">69</span> <span class="hljs-number">69</span> <span class="hljs-number">70</span> <span class="hljs-number">69</span> <span class="hljs-number">67</span> <span class="hljs-number">72</span> <span class="hljs-number">74</span> <span class="hljs-number">65</span>)
+user=&gt; (intervals-&gt;notes disjunct-<span class="hljs-number">20</span> f-major)
+(<span class="hljs-number">65</span> <span class="hljs-number">76</span> <span class="hljs-number">76</span> <span class="hljs-number">77</span> <span class="hljs-number">70</span> <span class="hljs-number">74</span> <span class="hljs-number">76</span> <span class="hljs-number">65</span> <span class="hljs-number">74</span> <span class="hljs-number">72</span> <span class="hljs-number">77</span> <span class="hljs-number">69</span> <span class="hljs-number">74</span> <span class="hljs-number">69</span> <span class="hljs-number">70</span> <span class="hljs-number">67</span> <span class="hljs-number">77</span> <span class="hljs-number">67</span> <span class="hljs-number">65</span> <span class="hljs-number">77</span>)
+user=&gt; (map find-note-name (intervals-&gt;notes conjunct-<span class="hljs-number">20</span> f-major))
+(<span class="hljs-symbol">:F4</span> <span class="hljs-symbol">:G4</span> <span class="hljs-symbol">:F4</span> <span class="hljs-symbol">:C5</span> <span class="hljs-symbol">:D5</span> <span class="hljs-symbol">:E5</span> <span class="hljs-symbol">:A4</span> <span class="hljs-symbol">:Bb4</span> <span class="hljs-symbol">:F4</span> <span class="hljs-symbol">:G4</span> <span class="hljs-symbol">:A4</span> <span class="hljs-symbol">:G4</span> <span class="hljs-symbol">:A4</span> <span class="hljs-symbol">:A4</span> <span class="hljs-symbol">:Bb4</span> <span class="hljs-symbol">:A4</span> <span class="hljs-symbol">:G4</span> <span class="hljs-symbol">:C5</span> <span class="hljs-symbol">:D5</span> <span class="hljs-symbol">:F4</span>)
+user=&gt; (map find-note-name (intervals-&gt;notes disjunct-<span class="hljs-number">20</span> f-major))
+(<span class="hljs-symbol">:F4</span> <span class="hljs-symbol">:E5</span> <span class="hljs-symbol">:E5</span> <span class="hljs-symbol">:F5</span> <span class="hljs-symbol">:Bb4</span> <span class="hljs-symbol">:D5</span> <span class="hljs-symbol">:E5</span> <span class="hljs-symbol">:F4</span> <span class="hljs-symbol">:D5</span> <span class="hljs-symbol">:C5</span> <span class="hljs-symbol">:F5</span> <span class="hljs-symbol">:A4</span> <span class="hljs-symbol">:D5</span> <span class="hljs-symbol">:A4</span> <span class="hljs-symbol">:Bb4</span> <span class="hljs-symbol">:G4</span> <span class="hljs-symbol">:F5</span> <span class="hljs-symbol">:G4</span> <span class="hljs-symbol">:F4</span> <span class="hljs-symbol">:F5</span>)</code></pre>
+
+<hr>
+
+
+
+<h3 id="combining-melody-with-rhythm">Combining Melody with Rhythm</h3>
+
+<p>So far, we’ve been able to generate a rhythmic measure of a particular time signature, and a rhythm-agnostic melody with notes and melodic motion. Combining these together is pretty straight-forward.</p>
+
+<p>We used the <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L132">generate-rhythm</a> function to generate a 20-beat rhythm in 4/4 time signature earlier:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs php">user=&gt; (def rhythm (generate-rhythm <span class="hljs-number">10</span> <span class="hljs-number">4</span>))
+<span class="hljs-comment">#'user/rhythm</span>
+user=&gt; rhythm
+(<span class="hljs-number">1</span> <span class="hljs-number">3</span> <span class="hljs-number">5</span> <span class="hljs-number">7</span> <span class="hljs-number">9</span> <span class="hljs-number">11</span> <span class="hljs-number">13</span> <span class="hljs-number">15</span> <span class="hljs-number">17</span> <span class="hljs-number">19</span> <span class="hljs-number">21</span> <span class="hljs-number">23</span> <span class="hljs-number">25</span> <span class="hljs-number">27</span> <span class="hljs-number">29</span> <span class="hljs-number">31</span> <span class="hljs-number">33</span> <span class="hljs-number">35</span> <span class="hljs-number">37</span> <span class="hljs-number">39</span>)
+user=&gt; (count rhythm)
+<span class="hljs-number">20</span></code></pre>
+
+<p>Now that we have our rhythm, we can combine the <code>intervals-&gt;notes</code> and <code>generate-intervals</code> functions like before, to create a melody that contains as many notes as we have beats in our measure (20 beats):</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs ruby">user=&gt; (<span class="hljs-function"><span class="hljs-keyword">def</span> </span>f-major (scale <span class="hljs-symbol">:f4</span> <span class="hljs-symbol">:major</span>))
+user=&gt; (<span class="hljs-function"><span class="hljs-keyword">def</span> </span>conjunct-intervals (generate-intervals conjunct-motion f-major (count rhythm)))
+<span class="hljs-comment">#'user/conjunct-intervals</span>
+user=&gt; conjunct-intervals
+(<span class="hljs-number">1</span> <span class="hljs-number">2</span> <span class="hljs-number">2</span> <span class="hljs-number">4</span> <span class="hljs-number">5</span> <span class="hljs-number">4</span> <span class="hljs-number">5</span> <span class="hljs-number">6</span> <span class="hljs-number">7</span> <span class="hljs-number">8</span> <span class="hljs-number">7</span> <span class="hljs-number">3</span> <span class="hljs-number">3</span> <span class="hljs-number">4</span> <span class="hljs-number">5</span> <span class="hljs-number">1</span> <span class="hljs-number">2</span> <span class="hljs-number">3</span> <span class="hljs-number">1</span> <span class="hljs-number">1</span>)
+user=&gt; (<span class="hljs-function"><span class="hljs-keyword">def</span> </span>conjunct-melody (intervals-&gt;notes conjunct-intervals f-major))
+<span class="hljs-comment">#'user/conjunct-melody</span>
+user=&gt; conjunct-melody
+(<span class="hljs-number">65</span> <span class="hljs-number">67</span> <span class="hljs-number">67</span> <span class="hljs-number">70</span> <span class="hljs-number">72</span> <span class="hljs-number">70</span> <span class="hljs-number">72</span> <span class="hljs-number">74</span> <span class="hljs-number">76</span> <span class="hljs-number">77</span> <span class="hljs-number">76</span> <span class="hljs-number">69</span> <span class="hljs-number">69</span> <span class="hljs-number">70</span> <span class="hljs-number">72</span> <span class="hljs-number">65</span> <span class="hljs-number">67</span> <span class="hljs-number">69</span> <span class="hljs-number">65</span> <span class="hljs-number">65</span>)</code></pre>
+
+<p>We now have the rhythm and the melody of 20 beats, as follows:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs lisp"><span class="hljs-list">(<span class="hljs-title">rhythm</span>)</span>          <span class="hljs-number">1</span>   <span class="hljs-number">3</span>   <span class="hljs-number">5</span>   <span class="hljs-number">7</span>   <span class="hljs-number">9</span>   <span class="hljs-number">11</span>  <span class="hljs-number">13</span>  <span class="hljs-number">15</span>  <span class="hljs-number">17</span>  <span class="hljs-number">19</span>  <span class="hljs-number">21</span>  <span class="hljs-number">23</span>  <span class="hljs-number">25</span>  <span class="hljs-number">27</span>  <span class="hljs-number">29</span>  <span class="hljs-number">31</span>  <span class="hljs-number">33</span>  <span class="hljs-number">35</span>  <span class="hljs-number">37</span>  <span class="hljs-number">39</span>
+<span class="hljs-list">(<span class="hljs-title">conjunct-melody</span>)</span> <span class="hljs-number">65</span>  <span class="hljs-number">67</span>  <span class="hljs-number">67</span>  <span class="hljs-number">70</span>  <span class="hljs-number">72</span>  <span class="hljs-number">70</span>  <span class="hljs-number">72</span>  <span class="hljs-number">74</span>  <span class="hljs-number">76</span>  <span class="hljs-number">77</span>  <span class="hljs-number">76</span>  <span class="hljs-number">69</span>  <span class="hljs-number">69</span>  <span class="hljs-number">70</span>  <span class="hljs-number">72</span>  <span class="hljs-number">65</span>  <span class="hljs-number">67</span>  <span class="hljs-number">69</span>  <span class="hljs-number">65</span>  <span class="hljs-number">65</span></code></pre>
+
+<p>The <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L127">map-entity</a> function takes a rhythm and a melody, and creates a list of hash-maps, each of the format <code>{:note note, :pos beat}</code>, indicating which note of the melody goes into which beat in the rhythm.</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs ruby">user=&gt; (<span class="hljs-function"><span class="hljs-keyword">def</span> </span>musical-piece (map-entity rhythm conjunct-melody))
+<span class="hljs-comment">#'user/musical-piece</span>
+user=&gt; musical-piece
+({<span class="hljs-symbol">:note</span> <span class="hljs-number">65</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">1</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">67</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">3</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">67</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">5</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">70</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">7</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">72</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">9</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">70</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">11</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">72</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">13</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">74</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">15</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">76</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">17</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">77</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">19</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">76</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">21</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">69</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">23</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">69</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">25</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">70</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">27</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">72</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">29</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">65</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">31</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">67</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">33</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">69</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">35</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">65</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">37</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">65</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">39</span>})</code></pre>
+
+<p>The <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L142">generate-entity-map</a> function wraps all of the above functionality into a single function. It takes all the parameters that we provided to other functions earlier - the procedure to simulate melodic motion, the measure count, beat count, and optionally, the note value, sparseness and scale - and creates hash-maps using <code>map-entity</code>.</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs ruby">user=&gt; (generate-entity-map conjunct-motion <span class="hljs-number">10</span> <span class="hljs-number">4</span> <span class="hljs-symbol">:scale</span> (scale <span class="hljs-symbol">:f4</span> <span class="hljs-symbol">:major</span>)))
+({<span class="hljs-symbol">:note</span> <span class="hljs-number">65</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">1</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">67</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">2</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">72</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">4</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">74</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">5</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">76</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">6</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">65</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">8</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">74</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">9</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">72</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">10</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">74</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">12</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">72</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">13</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">74</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">14</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">67</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">16</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">65</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">17</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">67</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">18</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">72</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">20</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">65</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">21</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">65</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">22</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">67</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">24</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">69</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">25</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">67</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">26</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">70</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">28</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">77</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">29</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">65</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">30</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">67</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">32</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">72</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">33</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">70</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">34</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">69</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">36</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">70</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">37</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">72</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">38</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">77</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">40</span>})</code></pre>
+
+<p>And that’s it! We have a barebones <em>musical piece</em> with rhythm and melody. Now we can move on to <del>peace and</del> harmony!</p>
+
+<hr>
+
+
+
+<h3 id="harmony">Harmony</h3>
+
+<p>If Melody is horizontal in time, <a href="https://en.wikipedia.org/wiki/Harmony">Harmony</a> is vertical. Harmony uses simultaneously played notes, or <em>chords</em>, to create textures that act as a rich backdrop for the melody. Melody without harmony is like the painting of a beautiful mountainside, drawn against a plain white background instead of the sky.</p>
+
+
+
+<h5 id="chords-and-arpeggios">Chords and Arpeggios</h5>
+
+<p><a href="https://en.wikipedia.org/wiki/Chord_%28music%29">Chords</a> are notes played simultaneously. These are usually harmonious notes that, when played together, produce a sound that’s something more than the sum of their parts. If the same notes are played in a sequence instead of simultaneously, they become an <a href="https://en.wikipedia.org/wiki/Arpeggio">Arpeggio</a>.</p>
+
+<p>A <a href="https://en.wikipedia.org/wiki/Major_chord"><em>major chord</em></a> is constructed by taking the root note, the note that is its <em>major third</em> (4 semitones forward) and its <em>perfect fifth</em> (7 semitones forward). For instance, C-major chord is <code>C - E - G</code>.</p>
+
+<p>A <a href="https://en.wikipedia.org/wiki/Minor_chord"><em>minor chord</em></a> is constructed by taking the root note, the <em>minor third</em> (3 semitones forward) and the <em>perfect fifth</em>. The C-minor chord is <code>C - D#/Eb - G</code>.</p>
+
+<p>There are numerous other ways of constructing chords (augmented, diminished, suspended etc), but just like the major and minor scales, the major and minor chords are the most popular.</p>
+
+
+
+<h5 id="chordifying-a-musical-piece"><em>Chordifying</em> a musical piece</h5>
+
+<p>Using <code>generate-entity-map</code>, we built a map of <code>{:note note, :pos beat}</code> pairs and generated a musical piece with just rhythm and melody. Time to <em>harmonize</em> it.</p>
+
+<p>The <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj">harmony</a> namespace contains procedures that construct chords from notes. For instance, the <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj#L30">major-chords-octave-down</a> function takes a beat position and a note, constructs the major chord of the note shifted down by one octave (Example, F3 major chord if the note is F4), and returns a hash-map <code>{:pos beat :note major-chord-of-note-shifted-one-octave-down}</code> of that note.</p>
+
+<p>The <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L156">chordify</a> higher-order function takes the map of our musical piece, and a <em>procedure</em> or fundamental method to build a chord out of a note (just like our <code>generate-intervals</code> function took <code>conjunct-motion</code> or <code>disjunct-motion</code> as parameters, remember?). It then takes our musical piece, picks out a few notes randomly, and generates a new musical piece with chords instead of notes at the same positions.</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs ruby">user=&gt; musical-piece
+({<span class="hljs-symbol">:note</span> <span class="hljs-number">65</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">1</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">67</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">3</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">67</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">5</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">70</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">7</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">72</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">9</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">70</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">11</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">72</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">13</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">74</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">15</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">76</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">17</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">77</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">19</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">76</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">21</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">69</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">23</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">69</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">25</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">70</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">27</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">72</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">29</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">65</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">31</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">67</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">33</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">69</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">35</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">65</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">37</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">65</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">39</span>})
+user=&gt; (<span class="hljs-function"><span class="hljs-keyword">def</span> </span>chords (chordify musical-piece major-chords-octave-down))
+<span class="hljs-comment">#'user/chords</span>
+user=&gt; chords
+({<span class="hljs-symbol">:note</span> [<span class="hljs-number">53</span> <span class="hljs-number">57</span> <span class="hljs-number">60</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">1</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">55</span> <span class="hljs-number">59</span> <span class="hljs-number">62</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">5</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">60</span> <span class="hljs-number">64</span> <span class="hljs-number">67</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">9</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">60</span> <span class="hljs-number">64</span> <span class="hljs-number">67</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">13</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">57</span> <span class="hljs-number">61</span> <span class="hljs-number">64</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">25</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">53</span> <span class="hljs-number">57</span> <span class="hljs-number">60</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">31</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">57</span> <span class="hljs-number">61</span> <span class="hljs-number">64</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">35</span>})</code></pre>
+
+<p>Now that we have the chords, let’s lay out our 20-beat musical piece again:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs lisp"><span class="hljs-list">(<span class="hljs-title">rhythm</span>)</span>          <span class="hljs-number">1</span>   <span class="hljs-number">3</span>   <span class="hljs-number">5</span>   <span class="hljs-number">7</span>   <span class="hljs-number">9</span>   <span class="hljs-number">11</span>  <span class="hljs-number">13</span>  <span class="hljs-number">15</span>  <span class="hljs-number">17</span>  <span class="hljs-number">19</span>  <span class="hljs-number">21</span>  <span class="hljs-number">23</span>  <span class="hljs-number">25</span>  <span class="hljs-number">27</span>  <span class="hljs-number">29</span>  <span class="hljs-number">31</span>  <span class="hljs-number">33</span>  <span class="hljs-number">35</span>  <span class="hljs-number">37</span>  <span class="hljs-number">39</span>
+<span class="hljs-list">(<span class="hljs-title">conjunct-melody</span>)</span> <span class="hljs-number">65</span>  <span class="hljs-number">67</span>  <span class="hljs-number">67</span>  <span class="hljs-number">70</span>  <span class="hljs-number">72</span>  <span class="hljs-number">70</span>  <span class="hljs-number">72</span>  <span class="hljs-number">74</span>  <span class="hljs-number">76</span>  <span class="hljs-number">77</span>  <span class="hljs-number">76</span>  <span class="hljs-number">69</span>  <span class="hljs-number">69</span>  <span class="hljs-number">70</span>  <span class="hljs-number">72</span>  <span class="hljs-number">65</span>  <span class="hljs-number">67</span>  <span class="hljs-number">69</span>  <span class="hljs-number">65</span>  <span class="hljs-number">65</span>
+<span class="hljs-list">(<span class="hljs-title">chords</span>)</span>          <span class="hljs-number">53</span>      <span class="hljs-number">55</span>      <span class="hljs-number">60</span>      <span class="hljs-number">60</span>                      <span class="hljs-number">57</span>          <span class="hljs-number">53</span>      <span class="hljs-number">57</span> 
+                  <span class="hljs-number">57</span>      <span class="hljs-number">59</span>      <span class="hljs-number">64</span>      <span class="hljs-number">64</span>                      <span class="hljs-number">61</span>          <span class="hljs-number">57</span>      <span class="hljs-number">61</span>  
+                  <span class="hljs-number">60</span>      <span class="hljs-number">62</span>      <span class="hljs-number">67</span>      <span class="hljs-number">67</span>                      <span class="hljs-number">64</span>          <span class="hljs-number">60</span>      <span class="hljs-number">64</span></code></pre>
+
+<p>And there we go! Our 20-beat musical piece in 4/4 is now complete!</p>
+
+
+
+<h5 id="tldr-harmony">TL;DR Harmony</h5>
+
+<ul>
+<li>The <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj">harmony</a> namespace contains procedures that construct chords from notes. For instance, the <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj#L30">major-chords-octave-down</a> function takes a beat position and a note, constructs the major chord of the note shifted down by one octave (Example, F3 major chord if the note is F4), and returns a hash-map <code>{:pos beat :note major-chord-of-note-shifted-one-octave-down}</code> of that note.</li>
+</ul>
+
+
+
+<pre class="prettyprint"><code class=" hljs lasso">user<span class="hljs-subst">=&gt;</span> (major<span class="hljs-attribute">-chords</span><span class="hljs-attribute">-octave</span><span class="hljs-attribute">-down</span> <span class="hljs-number">1</span> <span class="hljs-number">67</span>)
+{:note <span class="hljs-preprocessor">[</span><span class="hljs-number">55</span> <span class="hljs-number">59</span> <span class="hljs-number">62</span><span class="hljs-preprocessor">]</span><span class="hljs-markup">, :pos 1}</span></code></pre>
+
+<ul>
+<li>We use the <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L156">chordify</a> higher-order function that takes the map of our musical piece, and a <em>procedure</em> or fundamental method to build a chord out of a note. It picks out random notes from our piece to <em>chordify</em>, and generates a new musical piece with chords instead of notes at the same positions.</li>
+</ul>
+
+
+
+<pre class="prettyprint"><code class=" hljs ruby">user=&gt; musical-piece
+({<span class="hljs-symbol">:note</span> <span class="hljs-number">65</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">1</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">67</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">3</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">67</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">5</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">70</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">7</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">72</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">9</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">70</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">11</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">72</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">13</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">74</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">15</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">76</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">17</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">77</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">19</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">76</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">21</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">69</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">23</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">69</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">25</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">70</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">27</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">72</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">29</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">65</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">31</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">67</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">33</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">69</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">35</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">65</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">37</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">65</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">39</span>})
+user=&gt; (<span class="hljs-function"><span class="hljs-keyword">def</span> </span>chords (chordify musical-piece major-chords-octave-down))
+<span class="hljs-comment">#'user/chords</span>
+user=&gt; chords
+({<span class="hljs-symbol">:note</span> [<span class="hljs-number">53</span> <span class="hljs-number">57</span> <span class="hljs-number">60</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">1</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">55</span> <span class="hljs-number">59</span> <span class="hljs-number">62</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">5</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">60</span> <span class="hljs-number">64</span> <span class="hljs-number">67</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">9</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">60</span> <span class="hljs-number">64</span> <span class="hljs-number">67</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">13</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">57</span> <span class="hljs-number">61</span> <span class="hljs-number">64</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">25</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">53</span> <span class="hljs-number">57</span> <span class="hljs-number">60</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">31</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">57</span> <span class="hljs-number">61</span> <span class="hljs-number">64</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">35</span>})</code></pre>
+
+<ul>
+<li>With this we have <code>musical-piece</code> (melody with rhythm) and <code>chords</code> (harmony with rhythm), all that we need to start generating music.</li>
+</ul>
+
+<hr>
+
+
+
+<h3 id="macroland-music-as-code-and-code-as-music">Macroland - Music as Code and Code as Music</h3>
+
+<p><em>“All work and no play makes Jack a dull chap” - Van Morrison, Down the Road, 2002.</em></p>
+
+<p>Now that we have the maps for both melody and chords in hand, we can now play them! We’re gonna write some new code <del>that generates music</del> that generates <em>code</em> that generates music.</p>
+
+
+
+<h5 id="playing-notes-in-overtone">Playing notes in Overtone</h5>
+
+<p>Here’s how we’d play a note in overtone: <code>(at epoch-time (instrument note))</code></p>
+
+<p>Here’s an example: <code>(at 1436066513081 (piano 67))</code></p>
+
+<p>The <code>now</code> function returns the current epoch time, so now we have: <code>(at (now) (piano 67))</code></p>
+
+<p>Say we had a short melody of one measure <code>({:note 67, :pos 1} {:note 65, :pos 2} {:note 67, :pos 3} {:note 65, :pos 4})</code> with a beat-length of 250 milliseconds (4 beats, 1 second total). Let’s play this measure with Overtone:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs livecodeserver">user=&gt; (let [<span class="hljs-built_in">time</span> (now)]
+         (<span class="hljs-keyword">at</span> (+ (* <span class="hljs-number">250</span> <span class="hljs-number">1</span>) <span class="hljs-built_in">time</span>) (piano <span class="hljs-number">67</span>))
+         (<span class="hljs-keyword">at</span> (+ (* <span class="hljs-number">250</span> <span class="hljs-number">2</span>) <span class="hljs-built_in">time</span>) (piano <span class="hljs-number">65</span>))
+         (<span class="hljs-keyword">at</span> (+ (* <span class="hljs-number">250</span> <span class="hljs-number">3</span>) <span class="hljs-built_in">time</span>) (piano <span class="hljs-number">67</span>))
+         (<span class="hljs-keyword">at</span> (+ (* <span class="hljs-number">250</span> <span class="hljs-number">4</span>) <span class="hljs-built_in">time</span>) (piano <span class="hljs-number">65</span>)))
+<span class="hljs-comment">#&lt;synth-node[loading]: overtone.inst.piano/piano 74&gt;</span></code></pre>
+
+
+
+<h5 id="generating-code-for-our-musical-piece">Generating code for our musical piece</h5>
+
+<p>The <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L177">play-piece</a> function takes our musical piece (as a map), the duration of each beat, and the instrument function as parameters. It uses the <a href="http://clojure.org/macros">macros</a> <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L172">construct-piece</a> and <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L165">play-note</a> to generate <em>Overtone code</em> to play our music. Let’s try this first with our small one-measure melody:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs parser3"><span class="xml">user=&gt; (play-piece '({:note </span><span class="hljs-number">67</span><span class="xml">, :pos </span><span class="hljs-number">1</span><span class="xml">} {:note </span><span class="hljs-number">65</span><span class="xml">, :pos </span><span class="hljs-number">2</span><span class="xml">} {:note </span><span class="hljs-number">67</span><span class="xml">, :pos </span><span class="hljs-number">3</span><span class="xml">} {:note </span><span class="hljs-number">65</span><span class="xml">, :pos </span><span class="hljs-number">4</span><span class="xml">}) </span><span class="hljs-number">250</span><span class="xml"> (fn [note] (piano note)))
+(clojure.core/let [time (overtone.live/now)] (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19948</span><span class="xml"></span><span class="hljs-variable">$fn__19949</span><span class="xml"> user</span><span class="hljs-variable">$eval19948</span><span class="xml"></span><span class="hljs-variable">$fn__19949</span><span class="xml">@</span><span class="hljs-number">4</span><span class="xml">c68278f&gt; </span><span class="hljs-number">67</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">500</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19948</span><span class="xml"></span><span class="hljs-variable">$fn__19949</span><span class="xml"> user</span><span class="hljs-variable">$eval19948</span><span class="xml"></span><span class="hljs-variable">$fn__19949</span><span class="xml">@</span><span class="hljs-number">4</span><span class="xml">c68278f&gt; </span><span class="hljs-number">65</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19948</span><span class="xml"></span><span class="hljs-variable">$fn__19949</span><span class="xml"> user</span><span class="hljs-variable">$eval19948</span><span class="xml"></span><span class="hljs-variable">$fn__19949</span><span class="xml">@</span><span class="hljs-number">4</span><span class="xml">c68278f&gt; </span><span class="hljs-number">67</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">1000</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19948</span><span class="xml"></span><span class="hljs-variable">$fn__19949</span><span class="xml"> user</span><span class="hljs-variable">$eval19948</span><span class="xml"></span><span class="hljs-variable">$fn__19949</span><span class="xml">@</span><span class="hljs-number">4</span><span class="xml">c68278f&gt; </span><span class="hljs-number">65</span><span class="xml">)))</span></code></pre>
+
+<p>Now, with the melody and chords of our <em>musical piece</em>:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs parser3"><span class="xml">user=&gt; musical-piece
+({:note </span><span class="hljs-number">65</span><span class="xml">, :pos </span><span class="hljs-number">1</span><span class="xml">} {:note </span><span class="hljs-number">67</span><span class="xml">, :pos </span><span class="hljs-number">3</span><span class="xml">} {:note </span><span class="hljs-number">67</span><span class="xml">, :pos </span><span class="hljs-number">5</span><span class="xml">} {:note </span><span class="hljs-number">70</span><span class="xml">, :pos </span><span class="hljs-number">7</span><span class="xml">} {:note </span><span class="hljs-number">72</span><span class="xml">, :pos </span><span class="hljs-number">9</span><span class="xml">} {:note </span><span class="hljs-number">70</span><span class="xml">, :pos </span><span class="hljs-number">11</span><span class="xml">} {:note </span><span class="hljs-number">72</span><span class="xml">, :pos </span><span class="hljs-number">13</span><span class="xml">} {:note </span><span class="hljs-number">74</span><span class="xml">, :pos </span><span class="hljs-number">15</span><span class="xml">} {:note </span><span class="hljs-number">76</span><span class="xml">, :pos </span><span class="hljs-number">17</span><span class="xml">} {:note </span><span class="hljs-number">77</span><span class="xml">, :pos </span><span class="hljs-number">19</span><span class="xml">} {:note </span><span class="hljs-number">76</span><span class="xml">, :pos </span><span class="hljs-number">21</span><span class="xml">} {:note </span><span class="hljs-number">69</span><span class="xml">, :pos </span><span class="hljs-number">23</span><span class="xml">} {:note </span><span class="hljs-number">69</span><span class="xml">, :pos </span><span class="hljs-number">25</span><span class="xml">} {:note </span><span class="hljs-number">70</span><span class="xml">, :pos </span><span class="hljs-number">27</span><span class="xml">} {:note </span><span class="hljs-number">72</span><span class="xml">, :pos </span><span class="hljs-number">29</span><span class="xml">} {:note </span><span class="hljs-number">65</span><span class="xml">, :pos </span><span class="hljs-number">31</span><span class="xml">} {:note </span><span class="hljs-number">67</span><span class="xml">, :pos </span><span class="hljs-number">33</span><span class="xml">} {:note </span><span class="hljs-number">69</span><span class="xml">, :pos </span><span class="hljs-number">35</span><span class="xml">} {:note </span><span class="hljs-number">65</span><span class="xml">, :pos </span><span class="hljs-number">37</span><span class="xml">} {:note </span><span class="hljs-number">65</span><span class="xml">, :pos </span><span class="hljs-number">39</span><span class="xml">})
+user=&gt; (def code-for-melody (play-piece musical-piece </span><span class="hljs-number">250</span><span class="xml"> (fn [note] (piano note))))
+</span><span class="hljs-comment">#'user/code-for-melody</span><span class="xml">
+user=&gt; code-for-melody
+(clojure.core/let [time (overtone.live/now)] (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">65</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">67</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">1250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">67</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">1750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">70</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">2250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">72</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">2750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">70</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">3250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">72</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">3750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">74</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">4250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">76</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">4750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">77</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">5250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">76</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">5750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">69</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">6250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">69</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">6750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">70</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">7250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">72</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">7750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">65</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">8250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">67</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">8750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">69</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">9250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">65</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">9750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">65</span><span class="xml">)))
+user=&gt; chords
+({:note [</span><span class="hljs-number">53</span><span class="xml"> </span><span class="hljs-number">57</span><span class="xml"> </span><span class="hljs-number">60</span><span class="xml">], :pos </span><span class="hljs-number">1</span><span class="xml">} {:note [</span><span class="hljs-number">55</span><span class="xml"> </span><span class="hljs-number">59</span><span class="xml"> </span><span class="hljs-number">62</span><span class="xml">], :pos </span><span class="hljs-number">5</span><span class="xml">} {:note [</span><span class="hljs-number">60</span><span class="xml"> </span><span class="hljs-number">64</span><span class="xml"> </span><span class="hljs-number">67</span><span class="xml">], :pos </span><span class="hljs-number">9</span><span class="xml">} {:note [</span><span class="hljs-number">60</span><span class="xml"> </span><span class="hljs-number">64</span><span class="xml"> </span><span class="hljs-number">67</span><span class="xml">], :pos </span><span class="hljs-number">13</span><span class="xml">} {:note [</span><span class="hljs-number">57</span><span class="xml"> </span><span class="hljs-number">61</span><span class="xml"> </span><span class="hljs-number">64</span><span class="xml">], :pos </span><span class="hljs-number">25</span><span class="xml">} {:note [</span><span class="hljs-number">53</span><span class="xml"> </span><span class="hljs-number">57</span><span class="xml"> </span><span class="hljs-number">60</span><span class="xml">], :pos </span><span class="hljs-number">31</span><span class="xml">} {:note [</span><span class="hljs-number">57</span><span class="xml"> </span><span class="hljs-number">61</span><span class="xml"> </span><span class="hljs-number">64</span><span class="xml">], :pos </span><span class="hljs-number">35</span><span class="xml">})
+user=&gt; (def code-for-chords (play-piece chords </span><span class="hljs-number">250</span><span class="xml"> (fn [chord] (doseq [note chord] (piano note)))))
+</span><span class="hljs-comment">#'user/code-for-chords</span><span class="xml">
+user=&gt; code-for-chords
+(clojure.core/let [time (overtone.live/now)] (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml"> user</span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml">@</span><span class="hljs-number">711</span><span class="xml">b461c&gt; [</span><span class="hljs-number">53</span><span class="xml"> </span><span class="hljs-number">57</span><span class="xml"> </span><span class="hljs-number">60</span><span class="xml">])) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">1250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml"> user</span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml">@</span><span class="hljs-number">711</span><span class="xml">b461c&gt; [</span><span class="hljs-number">55</span><span class="xml"> </span><span class="hljs-number">59</span><span class="xml"> </span><span class="hljs-number">62</span><span class="xml">])) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">2250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml"> user</span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml">@</span><span class="hljs-number">711</span><span class="xml">b461c&gt; [</span><span class="hljs-number">60</span><span class="xml"> </span><span class="hljs-number">64</span><span class="xml"> </span><span class="hljs-number">67</span><span class="xml">])) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">3250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml"> user</span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml">@</span><span class="hljs-number">711</span><span class="xml">b461c&gt; [</span><span class="hljs-number">60</span><span class="xml"> </span><span class="hljs-number">64</span><span class="xml"> </span><span class="hljs-number">67</span><span class="xml">])) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">6250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml"> user</span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml">@</span><span class="hljs-number">711</span><span class="xml">b461c&gt; [</span><span class="hljs-number">57</span><span class="xml"> </span><span class="hljs-number">61</span><span class="xml"> </span><span class="hljs-number">64</span><span class="xml">])) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">7750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml"> user</span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml">@</span><span class="hljs-number">711</span><span class="xml">b461c&gt; [</span><span class="hljs-number">53</span><span class="xml"> </span><span class="hljs-number">57</span><span class="xml"> </span><span class="hljs-number">60</span><span class="xml">])) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">8750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml"> user</span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml">@</span><span class="hljs-number">711</span><span class="xml">b461c&gt; [</span><span class="hljs-number">57</span><span class="xml"> </span><span class="hljs-number">61</span><span class="xml"> </span><span class="hljs-number">64</span><span class="xml">])))</span></code></pre>
+
+<p>Did you see that? We just took the generated code and stored them in <em>variables</em>! Lisp, folks. More on the power of <a href="http://c2.com/cgi/wiki?LispMacro">Macros</a> and <a href="https://en.wikipedia.org/wiki/Metaprogramming">Metaprogramming</a>.</p>
+
+<p>So now the variable <code>code-for-melody</code> contains the code that generates our melody, and <code>code-for-chords</code>, the code for the chords.</p>
+
+
+
+<h5 id="running-our-code-with-eval">Running our code with <code>eval</code></h5>
+
+<p>The notorious <a href="https://clojuredocs.org/clojure.core/eval">eval</a> function takes <em>code</em> as a parameter and evaluates it. Lisp <a href="https://en.wikipedia.org/wiki/Eval#Lisp">introduced eval</a> to the world.</p>
+
+<p>Let’s listen to our melody and chords:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs php">user=&gt; (<span class="hljs-keyword">eval</span> code-<span class="hljs-keyword">for</span>-melody)
+<span class="hljs-comment">#&lt;synth-node[loading]: overtone.inst.piano/piano 94&gt;</span>
+user=&gt; (<span class="hljs-keyword">eval</span> code-<span class="hljs-keyword">for</span>-chords)</code></pre>
+
+<p>But we don’t want to listen to them separately, we want to listen to them together! So how do we do that?</p>
+
+
+
+<h5 id="parallel-processing-with-pmap">Parallel processing with <code>pmap</code></h5>
+
+<p><a href="https://clojuredocs.org/clojure.core/pmap">pmap</a> to the rescue!</p>
+
+<p>The <a href="https://clojuredocs.org/clojure.core/map">map</a> function takes a function that operates on single operands, and applies the function to a sequence of items. Let’s say we have a list <code>(1 2 3 4 5)</code>, and we want to increment every number in the list to get <code>(2 3 4 5 6)</code>. We just have to map the function <code>inc</code> (increment by 1) to the sequence:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs fix"><span class="hljs-attribute">user</span>=<span class="hljs-string">&gt; (map inc '(1 2 3 4 5))
+(2 3 4 5 6)</span></code></pre>
+
+<p>The <a href="https://clojuredocs.org/clojure.core/pmap">pmap</a> function does a similar job, but instead of taking the function and sequentially applying it to every element in the list, it runs the function on the list elements <em>in parallel</em> or <em>at the same time, concurrently</em>.</p>
+
+<p>See where we’re heading with this? We take <code>eval</code> and call it concurrently on our <code>code-for-melody</code> and <code>code-for-chords</code> using pmap! Think of it as two different guitarists, one playing the main melody and the other playing the chords simultaneously. Except, in our case, <code>eval</code> is both the guitarists at once.</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs php">user=&gt; (pmap <span class="hljs-keyword">eval</span> (<span class="hljs-keyword">list</span> code-<span class="hljs-keyword">for</span>-melody code-<span class="hljs-keyword">for</span>-chords))
+(<span class="hljs-comment">#&lt;synth-node[loading]: overtone.inst.piano/piano 260&gt; nil)</span></code></pre>
+
+<p>The <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L186">generate-parallel-voices</a> function acts as a wrapper to <code>pmap - eval</code>. It takes all generated code as arguments (for melody, chords, and whatever we may generate in the future), and plays them simultaneously:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs php">user=&gt; (generate-parallel-voices code-<span class="hljs-keyword">for</span>-melody code-<span class="hljs-keyword">for</span>-chords)
+(<span class="hljs-comment">#&lt; clojure.lang.PersistentList$1@4180ac0a&gt; #&lt;synth-node[loading]: overtone.inst.piano/piano 711&gt; nil)</span></code></pre>
+
+<br />
+<audio controls>
+    <source src="./generated/f4major.wav" type="audio/wav">
+    Your browser does not support the audio element.
+</audio>
+
+<p>We just listened to our <em>musical piece</em>, together with rhythm, melody and harmony!</p>
+
+
+
+<h5 id="recording-the-music">Recording the music</h5>
+
+<p>Overtone provides two functions: <code>recording-start</code> and <code>recording-stop</code>, to save sound output to a file.</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs ruby">user=&gt; (recording-start <span class="hljs-string">"~/f4major.wav"</span>)
+<span class="hljs-symbol">:recording-started</span>
+user=&gt; (generate-parallel-voices code-<span class="hljs-keyword">for</span>-melody code-<span class="hljs-keyword">for</span>-chords)
+(<span class="hljs-comment">#&lt; clojure.lang.PersistentList$1@4180ac0a&gt; #&lt;synth-node[loading]: overtone.inst.piano/piano 711&gt; nil)</span>
+user=&gt; (recording-stop)
+<span class="hljs-string">"~/f4major.wav"</span></code></pre>
+
+<p>We can now find the .wav file at the path <code>~/f4major.wav</code>.</p>
+
+
+
+<h5 id="tldr-playback">TL;DR Playback</h5>
+
+<ul>
+<li>We use the <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L177">play-piece</a> function that takes our musical piece (as a map), the duration of each beat, and the instrument function as parameters, and run it on our <code>musical-piece</code> and <code>chords</code>. <code>play-piece</code> uses the <a href="http://clojure.org/macros">macros</a> <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L172">construct-piece</a> and <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L165">play-note</a> to generate <em>Overtone code</em> to play our music.</li>
+</ul>
+
+
+
+<pre class="prettyprint"><code class=" hljs parser3"><span class="xml">user=&gt; musical-piece
+({:note </span><span class="hljs-number">65</span><span class="xml">, :pos </span><span class="hljs-number">1</span><span class="xml">} {:note </span><span class="hljs-number">67</span><span class="xml">, :pos </span><span class="hljs-number">3</span><span class="xml">} {:note </span><span class="hljs-number">67</span><span class="xml">, :pos </span><span class="hljs-number">5</span><span class="xml">} {:note </span><span class="hljs-number">70</span><span class="xml">, :pos </span><span class="hljs-number">7</span><span class="xml">} {:note </span><span class="hljs-number">72</span><span class="xml">, :pos </span><span class="hljs-number">9</span><span class="xml">} {:note </span><span class="hljs-number">70</span><span class="xml">, :pos </span><span class="hljs-number">11</span><span class="xml">} {:note </span><span class="hljs-number">72</span><span class="xml">, :pos </span><span class="hljs-number">13</span><span class="xml">} {:note </span><span class="hljs-number">74</span><span class="xml">, :pos </span><span class="hljs-number">15</span><span class="xml">} {:note </span><span class="hljs-number">76</span><span class="xml">, :pos </span><span class="hljs-number">17</span><span class="xml">} {:note </span><span class="hljs-number">77</span><span class="xml">, :pos </span><span class="hljs-number">19</span><span class="xml">} {:note </span><span class="hljs-number">76</span><span class="xml">, :pos </span><span class="hljs-number">21</span><span class="xml">} {:note </span><span class="hljs-number">69</span><span class="xml">, :pos </span><span class="hljs-number">23</span><span class="xml">} {:note </span><span class="hljs-number">69</span><span class="xml">, :pos </span><span class="hljs-number">25</span><span class="xml">} {:note </span><span class="hljs-number">70</span><span class="xml">, :pos </span><span class="hljs-number">27</span><span class="xml">} {:note </span><span class="hljs-number">72</span><span class="xml">, :pos </span><span class="hljs-number">29</span><span class="xml">} {:note </span><span class="hljs-number">65</span><span class="xml">, :pos </span><span class="hljs-number">31</span><span class="xml">} {:note </span><span class="hljs-number">67</span><span class="xml">, :pos </span><span class="hljs-number">33</span><span class="xml">} {:note </span><span class="hljs-number">69</span><span class="xml">, :pos </span><span class="hljs-number">35</span><span class="xml">} {:note </span><span class="hljs-number">65</span><span class="xml">, :pos </span><span class="hljs-number">37</span><span class="xml">} {:note </span><span class="hljs-number">65</span><span class="xml">, :pos </span><span class="hljs-number">39</span><span class="xml">})
+user=&gt; (def code-for-melody (play-piece musical-piece </span><span class="hljs-number">250</span><span class="xml"> (fn [note] (piano note))))
+</span><span class="hljs-comment">#'user/code-for-melody</span><span class="xml">
+user=&gt; code-for-melody
+(clojure.core/let [time (overtone.live/now)] (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">65</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">67</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">1250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">67</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">1750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">70</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">2250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">72</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">2750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">70</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">3250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">72</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">3750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">74</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">4250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">76</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">4750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">77</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">5250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">76</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">5750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">69</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">6250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">69</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">6750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">70</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">7250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">72</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">7750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">65</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">8250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">67</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">8750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">69</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">9250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">65</span><span class="xml">)) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">9750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml"> user</span><span class="hljs-variable">$eval19984</span><span class="xml"></span><span class="hljs-variable">$fn__19985</span><span class="xml">@</span><span class="hljs-number">49255</span><span class="xml">fc0&gt; </span><span class="hljs-number">65</span><span class="xml">)))
+user=&gt; chords
+({:note [</span><span class="hljs-number">53</span><span class="xml"> </span><span class="hljs-number">57</span><span class="xml"> </span><span class="hljs-number">60</span><span class="xml">], :pos </span><span class="hljs-number">1</span><span class="xml">} {:note [</span><span class="hljs-number">55</span><span class="xml"> </span><span class="hljs-number">59</span><span class="xml"> </span><span class="hljs-number">62</span><span class="xml">], :pos </span><span class="hljs-number">5</span><span class="xml">} {:note [</span><span class="hljs-number">60</span><span class="xml"> </span><span class="hljs-number">64</span><span class="xml"> </span><span class="hljs-number">67</span><span class="xml">], :pos </span><span class="hljs-number">9</span><span class="xml">} {:note [</span><span class="hljs-number">60</span><span class="xml"> </span><span class="hljs-number">64</span><span class="xml"> </span><span class="hljs-number">67</span><span class="xml">], :pos </span><span class="hljs-number">13</span><span class="xml">} {:note [</span><span class="hljs-number">57</span><span class="xml"> </span><span class="hljs-number">61</span><span class="xml"> </span><span class="hljs-number">64</span><span class="xml">], :pos </span><span class="hljs-number">25</span><span class="xml">} {:note [</span><span class="hljs-number">53</span><span class="xml"> </span><span class="hljs-number">57</span><span class="xml"> </span><span class="hljs-number">60</span><span class="xml">], :pos </span><span class="hljs-number">31</span><span class="xml">} {:note [</span><span class="hljs-number">57</span><span class="xml"> </span><span class="hljs-number">61</span><span class="xml"> </span><span class="hljs-number">64</span><span class="xml">], :pos </span><span class="hljs-number">35</span><span class="xml">})
+user=&gt; (def code-for-chords (play-piece chords </span><span class="hljs-number">250</span><span class="xml"> (fn [chord] (doseq [note chord] (piano note)))))
+</span><span class="hljs-comment">#'user/code-for-chords</span><span class="xml">
+user=&gt; code-for-chords
+(clojure.core/let [time (overtone.live/now)] (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml"> user</span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml">@</span><span class="hljs-number">711</span><span class="xml">b461c&gt; [</span><span class="hljs-number">53</span><span class="xml"> </span><span class="hljs-number">57</span><span class="xml"> </span><span class="hljs-number">60</span><span class="xml">])) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">1250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml"> user</span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml">@</span><span class="hljs-number">711</span><span class="xml">b461c&gt; [</span><span class="hljs-number">55</span><span class="xml"> </span><span class="hljs-number">59</span><span class="xml"> </span><span class="hljs-number">62</span><span class="xml">])) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">2250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml"> user</span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml">@</span><span class="hljs-number">711</span><span class="xml">b461c&gt; [</span><span class="hljs-number">60</span><span class="xml"> </span><span class="hljs-number">64</span><span class="xml"> </span><span class="hljs-number">67</span><span class="xml">])) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">3250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml"> user</span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml">@</span><span class="hljs-number">711</span><span class="xml">b461c&gt; [</span><span class="hljs-number">60</span><span class="xml"> </span><span class="hljs-number">64</span><span class="xml"> </span><span class="hljs-number">67</span><span class="xml">])) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">6250</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml"> user</span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml">@</span><span class="hljs-number">711</span><span class="xml">b461c&gt; [</span><span class="hljs-number">57</span><span class="xml"> </span><span class="hljs-number">61</span><span class="xml"> </span><span class="hljs-number">64</span><span class="xml">])) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">7750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml"> user</span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml">@</span><span class="hljs-number">711</span><span class="xml">b461c&gt; [</span><span class="hljs-number">53</span><span class="xml"> </span><span class="hljs-number">57</span><span class="xml"> </span><span class="hljs-number">60</span><span class="xml">])) (overtone.live/at (clojure.core/+ time </span><span class="hljs-number">8750</span><span class="xml">) (#<span class="hljs-tag">&lt;<span class="hljs-title">user</span></span></span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml"> user</span><span class="hljs-variable">$eval19988</span><span class="xml"></span><span class="hljs-variable">$fn__19989</span><span class="xml">@</span><span class="hljs-number">711</span><span class="xml">b461c&gt; [</span><span class="hljs-number">57</span><span class="xml"> </span><span class="hljs-number">61</span><span class="xml"> </span><span class="hljs-number">64</span><span class="xml">])))</span></code></pre>
+
+<ul>
+<li>We then use the <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L186">generate-parallel-voices</a> function that acts as a wrapper to <code>pmap - eval</code>. It takes all generated code as arguments (for melody, chords, and whatever we may generate in the future), and plays them simultaneously:</li>
+</ul>
+
+
+
+<pre class="prettyprint"><code class=" hljs php">user=&gt; (generate-parallel-voices code-<span class="hljs-keyword">for</span>-melody code-<span class="hljs-keyword">for</span>-chords)
+(<span class="hljs-comment">#&lt; clojure.lang.PersistentList$1@4180ac0a&gt; #&lt;synth-node[loading]: overtone.inst.piano/piano 711&gt; nil)</span></code></pre>
+
+<ul>
+<li>To record the generated music, we use <code>recording-start</code> and <code>recording-stop</code>.</li>
+</ul>
+
+
+
+<pre class="prettyprint"><code class=" hljs ruby">user=&gt; (recording-start <span class="hljs-string">"~/f4major.wav"</span>)
+<span class="hljs-symbol">:recording-started</span>
+user=&gt; (generate-parallel-voices code-<span class="hljs-keyword">for</span>-melody code-<span class="hljs-keyword">for</span>-chords)
+(<span class="hljs-comment">#&lt; clojure.lang.PersistentList$1@4180ac0a&gt; #&lt;synth-node[loading]: overtone.inst.piano/piano 711&gt; nil)</span>
+user=&gt; (recording-stop)
+<span class="hljs-string">"~/f4major.wav"</span></code></pre>
+
+<ul>
+<li>We sit back and listen to the music.</li>
+</ul>
+
+<hr>
+
+
+
+<h3 id="tldr-in-code">TL;DR in Code</h3>
+
+<p>The project is written with Clojure, so there needs be a system installation of <a href="http://leiningen.org/#install">leiningen</a> and <a href="http://clojure.org/downloads">clojure</a>, before we’re able to run the project.</p>
+
+<p>Setting up the project and entering the REPL:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs ruby">user<span class="hljs-variable">@localhost</span> ~ <span class="hljs-variable">$ </span>git clone git<span class="hljs-variable">@github</span>.<span class="hljs-symbol">com:</span>pranavrc/tenor.git
+user<span class="hljs-variable">@localhost</span> ~ <span class="hljs-variable">$ </span>cd tenor/
+user<span class="hljs-variable">@localhost</span> ~ <span class="hljs-variable">$ </span>lein deps
+user<span class="hljs-variable">@localhost</span> tenor <span class="hljs-variable">$ </span>lein repl</code></pre>
+
+<p>Inside the REPL:</p>
+
+
+
+<pre class="prettyprint"><code class=" hljs ruby">user=&gt; (use <span class="hljs-string">'tenor.core '</span>tenor.constructs <span class="hljs-string">'tenor.melody '</span>tenor.harmony <span class="hljs-string">'overtone.inst.piano '</span>overtone.live <span class="hljs-symbol">:reload</span>)
+user=&gt; (<span class="hljs-function"><span class="hljs-keyword">def</span> </span>musical-piece (generate-entity-map conjunct-motion <span class="hljs-number">5</span> <span class="hljs-number">11</span>))
+<span class="hljs-comment">#'user/musical-piece</span>
+user=&gt; musical-piece
+({<span class="hljs-symbol">:note</span> <span class="hljs-number">78</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">1</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">78</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">2</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">80</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">3</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">81</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">4</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">81</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">5</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">80</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">6</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">90</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">8</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">88</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">9</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">86</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">10</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">88</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">12</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">90</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">13</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">88</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">14</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">86</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">15</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">88</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">16</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">86</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">17</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">88</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">19</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">81</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">20</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">83</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">21</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">78</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">23</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">78</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">24</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">86</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">25</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">88</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">26</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">86</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">27</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">78</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">28</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">80</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">30</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">85</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">31</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">86</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">32</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">88</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">34</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">90</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">35</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">78</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">36</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">80</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">37</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">78</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">38</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">80</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">39</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">81</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">41</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">80</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">42</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">78</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">43</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">80</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">45</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">78</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">46</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">80</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">47</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">78</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">48</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">78</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">49</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">80</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">50</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">78</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">52</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">88</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">53</span>} {<span class="hljs-symbol">:note</span> <span class="hljs-number">90</span>, <span class="hljs-symbol">:pos</span> <span class="hljs-number">54</span>})
+user=&gt; (<span class="hljs-function"><span class="hljs-keyword">def</span> </span>chords (chordify musical-piece major-chords-octave-down))
+<span class="hljs-comment">#'user/chords</span>
+user=&gt; chords
+({<span class="hljs-symbol">:note</span> [<span class="hljs-number">68</span> <span class="hljs-number">72</span> <span class="hljs-number">75</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">3</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">69</span> <span class="hljs-number">73</span> <span class="hljs-number">76</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">4</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">69</span> <span class="hljs-number">73</span> <span class="hljs-number">76</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">5</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">78</span> <span class="hljs-number">82</span> <span class="hljs-number">85</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">8</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">76</span> <span class="hljs-number">80</span> <span class="hljs-number">83</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">9</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">69</span> <span class="hljs-number">73</span> <span class="hljs-number">76</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">20</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">66</span> <span class="hljs-number">70</span> <span class="hljs-number">73</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">23</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">66</span> <span class="hljs-number">70</span> <span class="hljs-number">73</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">24</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">74</span> <span class="hljs-number">78</span> <span class="hljs-number">81</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">25</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">66</span> <span class="hljs-number">70</span> <span class="hljs-number">73</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">28</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">73</span> <span class="hljs-number">77</span> <span class="hljs-number">80</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">31</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">66</span> <span class="hljs-number">70</span> <span class="hljs-number">73</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">36</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">68</span> <span class="hljs-number">72</span> <span class="hljs-number">75</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">47</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">66</span> <span class="hljs-number">70</span> <span class="hljs-number">73</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">52</span>} {<span class="hljs-symbol">:note</span> [<span class="hljs-number">78</span> <span class="hljs-number">82</span> <span class="hljs-number">85</span>], <span class="hljs-symbol">:pos</span> <span class="hljs-number">54</span>})
+user=&gt; (<span class="hljs-function"><span class="hljs-keyword">def</span> </span>code-<span class="hljs-keyword">for</span>-melody (play-piece musical-piece <span class="hljs-number">250</span> (fn [note] (piano note))))
+<span class="hljs-comment">#'user/code-for-melody</span>
+user=&gt; code-<span class="hljs-keyword">for</span>-melody
+(clojure.core/let [time (overtone.live/now)] (overtone.live/at (clojure.core/+ time <span class="hljs-number">250</span>) (<span class="hljs-comment">#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 78)) (overtone.live/at (clojure.core/+ time 500) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 78)) (overtone.live/at (clojure.core/+ time 750) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 80)) (overtone.live/at (clojure.core/+ time 1000) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 81)) (overtone.live/at (clojure.core/+ time 1250) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 81)) (overtone.live/at (clojure.core/+ time 1500) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 80)) (overtone.live/at (clojure.core/+ time 2000) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 90)) (overtone.live/at (clojure.core/+ time 2250) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 88)) (overtone.live/at (clojure.core/+ time 2500) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 86)) (overtone.live/at (clojure.core/+ time 3000) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 88)) (overtone.live/at (clojure.core/+ time 3250) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 90)) (overtone.live/at (clojure.core/+ time 3500) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 88)) (overtone.live/at (clojure.core/+ time 3750) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 86)) (overtone.live/at (clojure.core/+ time 4000) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 88)) (overtone.live/at (clojure.core/+ time 4250) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 86)) (overtone.live/at (clojure.core/+ time 4750) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 88)) (overtone.live/at (clojure.core/+ time 5000) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 81)) (overtone.live/at (clojure.core/+ time 5250) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 83)) (overtone.live/at (clojure.core/+ time 5750) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 78)) (overtone.live/at (clojure.core/+ time 6000) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 78)) (overtone.live/at (clojure.core/+ time 6250) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 86)) (overtone.live/at (clojure.core/+ time 6500) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 88)) (overtone.live/at (clojure.core/+ time 6750) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 86)) (overtone.live/at (clojure.core/+ time 7000) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 78)) (overtone.live/at (clojure.core/+ time 7500) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 80)) (overtone.live/at (clojure.core/+ time 7750) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 85)) (overtone.live/at (clojure.core/+ time 8000) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 86)) (overtone.live/at (clojure.core/+ time 8500) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 88)) (overtone.live/at (clojure.core/+ time 8750) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 90)) (overtone.live/at (clojure.core/+ time 9000) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 78)) (overtone.live/at (clojure.core/+ time 9250) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 80)) (overtone.live/at (clojure.core/+ time 9500) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 78)) (overtone.live/at (clojure.core/+ time 9750) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 80)) (overtone.live/at (clojure.core/+ time 10250) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 81)) (overtone.live/at (clojure.core/+ time 10500) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 80)) (overtone.live/at (clojure.core/+ time 10750) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 78)) (overtone.live/at (clojure.core/+ time 11250) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 80)) (overtone.live/at (clojure.core/+ time 11500) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 78)) (overtone.live/at (clojure.core/+ time 11750) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 80)) (overtone.live/at (clojure.core/+ time 12000) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 78)) (overtone.live/at (clojure.core/+ time 12250) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 78)) (overtone.live/at (clojure.core/+ time 12500) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 80)) (overtone.live/at (clojure.core/+ time 13000) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 78)) (overtone.live/at (clojure.core/+ time 13250) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 88)) (overtone.live/at (clojure.core/+ time 13500) (#&lt;user$fn__10489 user$fn__10489@71fce2e7&gt; 90)))</span>
+user=&gt; (<span class="hljs-function"><span class="hljs-keyword">def</span> </span>code-<span class="hljs-keyword">for</span>-chords (play-piece chords <span class="hljs-number">250</span> (fn [chord] (doseq [note chord] (piano note)))))
+<span class="hljs-comment">#'user/code-for-chords</span>
+user=&gt; code-<span class="hljs-keyword">for</span>-chords
+(clojure.core/let [time (overtone.live/now)] (overtone.live/at (clojure.core/+ time <span class="hljs-number">750</span>) (<span class="hljs-comment">#&lt;user$fn__10491 user$fn__10491@5e8cd00a&gt; [68 72 75])) (overtone.live/at (clojure.core/+ time 1000) (#&lt;user$fn__10491 user$fn__10491@5e8cd00a&gt; [69 73 76])) (overtone.live/at (clojure.core/+ time 1250) (#&lt;user$fn__10491 user$fn__10491@5e8cd00a&gt; [69 73 76])) (overtone.live/at (clojure.core/+ time 2000) (#&lt;user$fn__10491 user$fn__10491@5e8cd00a&gt; [78 82 85])) (overtone.live/at (clojure.core/+ time 2250) (#&lt;user$fn__10491 user$fn__10491@5e8cd00a&gt; [76 80 83])) (overtone.live/at (clojure.core/+ time 5000) (#&lt;user$fn__10491 user$fn__10491@5e8cd00a&gt; [69 73 76])) (overtone.live/at (clojure.core/+ time 5750) (#&lt;user$fn__10491 user$fn__10491@5e8cd00a&gt; [66 70 73])) (overtone.live/at (clojure.core/+ time 6000) (#&lt;user$fn__10491 user$fn__10491@5e8cd00a&gt; [66 70 73])) (overtone.live/at (clojure.core/+ time 6250) (#&lt;user$fn__10491 user$fn__10491@5e8cd00a&gt; [74 78 81])) (overtone.live/at (clojure.core/+ time 7000) (#&lt;user$fn__10491 user$fn__10491@5e8cd00a&gt; [66 70 73])) (overtone.live/at (clojure.core/+ time 7750) (#&lt;user$fn__10491 user$fn__10491@5e8cd00a&gt; [73 77 80])) (overtone.live/at (clojure.core/+ time 9000) (#&lt;user$fn__10491 user$fn__10491@5e8cd00a&gt; [66 70 73])) (overtone.live/at (clojure.core/+ time 11750) (#&lt;user$fn__10491 user$fn__10491@5e8cd00a&gt; [68 72 75])) (overtone.live/at (clojure.core/+ time 13000) (#&lt;user$fn__10491 user$fn__10491@5e8cd00a&gt; [66 70 73])) (overtone.live/at (clojure.core/+ time 13500) (#&lt;user$fn__10491 user$fn__10491@5e8cd00a&gt; [78 82 85])))</span>
+user=&gt; (recording-start <span class="hljs-string">"./generated/songin11by4.wav"</span>)
+<span class="hljs-symbol">:recording-started</span>
+user=&gt; (generate-parallel-voices code-<span class="hljs-keyword">for</span>-melody code-<span class="hljs-keyword">for</span>-chords)
+(<span class="hljs-comment">#&lt; clojure.lang.PersistentList$1@22fc7015&gt; #&lt;synth-node[loading]: overtone.inst.piano/piano 396&gt; nil)</span>
+user=&gt; (recording-stop)
+<span class="hljs-string">"./generated/songin11by4.wav"</span></code></pre>
+
+<hr>
+
+
+
+<h3 id="to-do">To Do</h3>
+
+<ul>
+<li><p>This is currently a fledgling project whose sense of melody stems from certain empirical ideas. Music theory is <em>huge</em>, and there are a lot more concepts we could incorporate, which will refine melody generation. For instance, the program could be taught to avoid <a href="https://en.wikipedia.org/wiki/Tritone">Tritone intervals</a> or the <em>diabolus in musica</em>, a very dissonant interval that is usually avoided when composing a melody. There are hundreds of similar concepts that the program could be made aware of.</p></li>
+<li><p>More procedures can be created in the <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/melody.clj">melody</a> and <a href="https://github.com/pranavrc/tenor/blob/master/src/tenor/harmony.clj">harmony</a> namespaces. We could write stateful procedures that take stock of what’s been generated so far, before generating further. For instance, <em>crouching before leaping</em> - if the melody has been ascending in steps for a while and an up-leap is generated, a little down-step before the up-leap adds a tad more <em>drama</em> to the leap, making it sound richer. To do this, the procedure will have to know the contour of the melody generated so far.</p></li>
+<li><p>Machine learning can be used to improvise songs based on specific emotions, moods and themes. Machine learning can also be used to learn from the listener about characteristics of songs that she/he likes and ones she/he hates.</p></li>
+<li><p>Bass, percussion, and a lot of other layers and instruments can be added (Right now we’re just at main melody and chords).</p></li>
+<li><p><a href="https://en.wikipedia.org/wiki/Markov_chain">Markov chains</a> can be used to learn from existing music and compose songs accordingly. <a href="http://artsites.ucsc.edu/faculty/cope/experiments.htm">David Cope</a>’s work is the one to look up to.</p></li>
+<li><p><a href="https://en.wikipedia.org/wiki/Evolutionary_music">Genetic algorithms</a> and <a href="http://tones.wolfram.com/about/how.html">Cellular automata</a> can be used to map generative and transformational algorithms into music.</p></li>
+<li><p><a href="http://www.algorithmic.net/">algorithmic.net</a> contains over a thousand research resources on Computer generated music. Great study resource!</p></li>
+<li><p>Probably a lot, lot more. Procedural music is a fascinatingly large world.</p></li>
+</ul>
+
+<hr>
+
+
+
+<h3 id="contributing">Contributing</h3>
+
+<p>Please feel free to contribute ideas, code, documentation, bug reports or just about anything else! This is a never-ending project that has infinite room for improvement, so there will probably never be a dearth of things to implement.</p>
+
+<audio controls>
+    <source src="./generated/g4major_e4minor.wav" type="audio/wav">
+    Your browser does not support the audio element.
+</audio>
+
+<hr>
+<br />
+<div id="footer">&copy; <a href="http://onloop.net">Pranav Ravichandran</a>. Markdown written using <a href="http://stackedit.io">StackEdit</a>.</div>
+</body>
+</html>
