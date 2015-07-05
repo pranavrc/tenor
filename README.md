@@ -725,7 +725,7 @@ user=> (let [time (now)]
 
 ##### Generating code for our musical piece
 
-The [play-piece](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L177) macro takes our musical piece (as a map), the duration of each beat, and the instrument function as parameters. It generates Overtone code to play the music. Let's try this first with our small one-measure melody:
+The [play-piece](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L177) function takes our musical piece (as a map), the duration of each beat, and the instrument function as parameters. It uses the [macros](http://clojure.org/macros) [construct-piece](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L172) and [play-note](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L165) to generate *Overtone code* to play our music. Let's try this first with our small one-measure melody:
 
 ```
 user=> (play-piece '({:note 67, :pos 1} {:note 65, :pos 2} {:note 67, :pos 3} {:note 65, :pos 4}) 250 (fn [note] (piano note)))
@@ -785,6 +785,13 @@ See where we're heading with this? We take `eval` and call it concurrently on ou
 ```
 user=> (pmap eval (list code-for-melody code-for-chords))
 (#<synth-node[loading]: overtone.inst.piano/piano 260> nil)
+```
+
+The [generate-parallel-voices](https://github.com/pranavrc/tenor/blob/master/src/tenor/constructs.clj#L186) function acts as a wrapper to `pmap - eval`. It takes all generated code as arguments (for melody, chords, and whatever we may generate in the future), and plays them simultaneously:
+
+```
+user=> (generate-parallel-voices code-for-melody code-for-chords)
+(#< clojure.lang.PersistentList$1@4180ac0a> #<synth-node[loading]: overtone.inst.piano/piano 711> nil)
 ```
 
 We just listened to our *musical piece*, together with rhythm, melody and harmony!
