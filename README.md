@@ -889,7 +889,7 @@ Setting up the project and entering the REPL:
 ```
 user@localhost ~ $ git clone git@github.com:pranavrc/tenor.git
 user@localhost ~ $ cd tenor/
-user@localhost ~ $ lein deps
+user@localhost tenor $ lein deps
 user@localhost tenor $ lein repl
 ```
 
