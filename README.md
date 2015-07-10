@@ -58,7 +58,7 @@ Some of these idiosyncrasies could be:
 
 - The famed [4/4 time signature](https://en.wikipedia.org/wiki/Time_signature#Most_frequent_time_signatures).
 - The [call-and-response](https://en.wikipedia.org/wiki/Call_and_response_%28music%29#Popular_music) pattern.
-- Phil Specter's [Wall of Sound](https://en.wikipedia.org/wiki/Wall_of_Sound).
+- Phil Spector's [Wall of Sound](https://en.wikipedia.org/wiki/Wall_of_Sound).
 - The [C-major scale](https://en.wikipedia.org/wiki/C_major).
 - Variations of the C-D-G-C chord pattern or other common chord patterns.
 
