@@ -403,8 +403,8 @@ In an octave, based on relative terms to the first note, each note has a designa
 A4     | A#4/Bb4      | B4           | C5          | C#5/Db5     | D5             |
 Unison | Minor second | Major second | Minor third | Major third | Perfect fourth |
 
-D#5/Eb5       | E5          | F5          | F#5/Gb5       | G5            | G#5/Ab5        |
-Perfect fifth | Minor sixth | Major sixth | Minor seventh | Major seventh | Perfect octave |
+D#5/Eb5         | E5            | F5          | F#5/Gb5       | G5            | G#5/Ab5       | A5
+Aug 4th/Dim 5th | Perfect fifth | Minor sixth | Major sixth   | Minor seventh | Major seventh | Perfect octave |
 ```
 
 ##### Melodic motion - conjunct and disjunct
